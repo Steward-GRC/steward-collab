@@ -46,7 +46,7 @@ var ErrUnavailable = errors.New("workloadauth: verifier unavailable")
 // Caller is a verified workload.
 type Caller struct {
 	// Name is the caller name, the service account without its "steward-"
-	// prefix (gateway, workflow, connector and so on).
+	// prefix (gateway, workflow, delivery and so on).
 	Name string
 	// ServiceAccount is the allow-listed "<namespace>/<serviceaccount>".
 	ServiceAccount string

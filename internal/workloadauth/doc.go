@@ -18,6 +18,6 @@
 //   - a caller listed as OnBehalf may pass an end-user actor.
 //
 // The package is self-contained: it imports no service code or protos, and the
-// same files are copied into every service under internal/workloadauth. The
-// copy in steward-core is the canonical one.
+// same files are copied byte-identical into every Steward service under
+// internal/workloadauth. The copy in steward-core is the origin one.
 package workloadauth
