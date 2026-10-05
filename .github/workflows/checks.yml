@@ -1,0 +1,47 @@
+name: checks
+# The org's reusable workflows from Steward-GRC/.github. The ruleset on main
+# requires `checks / Build & Test`, `dco / DCO` and `secrets / Secrets`, so the
+# caller job ids stay `checks`, `dco` and `secrets`. The secrets scan covers the
+# PR's own range on a PR and the full history on a push to main. The
+# proto-sync jobs pass with no proto-refs.env, so a repo that calls no other
+# service can keep them. Timeouts are set inside the called jobs (go.yml takes
+# its own as an input).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 10 * * 1-5"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    if: (github.event_name == 'pull_request' || github.event_name == 'merge_group') && github.event.pull_request.draft != true
+    uses: Steward-GRC/.github/.github/workflows/go.yml@main
+    with:
+      timeout-minutes: 25
+  dco:
+    if: (github.event_name == 'pull_request' || github.event_name == 'merge_group') && github.event.pull_request.draft != true
+    uses: Steward-GRC/.github/.github/workflows/dco.yml@main
+  secrets:
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' && github.event.pull_request.draft != true
+    permissions:
+      contents: read
+    uses: Steward-GRC/.github/.github/workflows/secrets.yml@main
+  proto-sync:
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft != true
+    permissions:
+      contents: read
+    uses: Steward-GRC/.github/.github/workflows/proto-sync.yml@main
+  proto-refresh:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: Steward-GRC/.github/.github/workflows/proto-sync.yml@main
