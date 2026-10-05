@@ -86,5 +86,4 @@ Bump a ref, run `task proto` and commit `gen/` in the same change.
 
 `internal/workloadauth` is a copy of steward-core's and is never edited here.
 `scripts/workloadauth-check.sh` (run in CI) compares it byte for byte with core's at
-`STEWARD_CORE_REF`; while core has no copy at that commit, the check warns that this one is
-interim.
+`STEWARD_CORE_REF` and fails on any difference, or when core has no copy at that commit.
