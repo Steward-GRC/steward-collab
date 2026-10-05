@@ -32,6 +32,8 @@ jobs:
           fi
       - name: Build
         run: go build ./...
+      - name: workloadauth matches its pinned copy
+        run: scripts/workloadauth-check.sh
       - name: Test
         run: go test ./... -cover
   lint:
