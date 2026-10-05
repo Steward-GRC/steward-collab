@@ -23,6 +23,28 @@ tasks:
     desc: Run tests
     cmds:
       - go test -parallel {{.TESTPARALLELISM}} ./...
+  test-race:
+    desc: Run tests with the race detector
+    cmds:
+      - go test -race -count=1 ./...
+  proto:
+    desc: Fetch the pinned callee protos, lint, and regenerate gen/
+    cmds:
+      - scripts/proto-generate.sh
+      - buf lint
+  proto-breaking:
+    desc: Check proto/ for breaking changes against main
+    cmds:
+      - buf breaking proto --against '.git#branch=main,subdir=proto'
+  docs:
+    desc: Regenerate docs/error-codes.md from the error registry
+    cmds:
+      - UPDATE_DOCS=1 go test ./internal/errcodes -run TestErrorCodesDocIsCurrent
+  run:
+    desc: Run the service locally with .env
+    dotenv: ['.env']
+    cmds:
+      - go run ./cmd/server
   test-cover:
     desc: Run tests with coverage reporting
     cmds:

@@ -1,0 +1,35 @@
+# Managed mode only rewrites go_package for the callee protos, so their stubs
+# land in this module's gen/go/thirdparty and can't collide with the owners' Go
+# packages. The other managed options are off, which keeps the descriptors
+# identical to the owners'.
+version: v2
+managed:
+  enabled: true
+  disable:
+    - file_option: java_package
+    - file_option: java_outer_classname
+    - file_option: java_multiple_files
+    - file_option: objc_class_prefix
+    - file_option: csharp_namespace
+    - file_option: php_namespace
+    - file_option: php_metadata_namespace
+    - file_option: ruby_package
+    - file_option: go_package
+      path: steward/collab/v1
+  override:
+    - file_option: go_package
+      path: steward/audit/v1
+      value: github.com/Steward-GRC/steward-collab/gen/go/thirdparty/audit/v1;auditv1
+    - file_option: go_package
+      path: steward/core/v1
+      value: github.com/Steward-GRC/steward-collab/gen/go/thirdparty/core/v1;corev1
+    - file_option: go_package
+      path: steward/identity/v1
+      value: github.com/Steward-GRC/steward-collab/gen/go/thirdparty/identity/v1;identityv1
+plugins:
+  - local: protoc-gen-go
+    out: .
+    opt: module=github.com/Steward-GRC/steward-collab
+  - local: protoc-gen-go-grpc
+    out: .
+    opt: module=github.com/Steward-GRC/steward-collab
