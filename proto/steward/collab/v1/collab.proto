@@ -1,0 +1,82 @@
+// Copyright 2026 The Steward Authors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package steward.collab.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Steward-GRC/steward-collab/gen/go/steward/collab/v1;collabv1";
+
+// CollabTokenService mints the short-lived token a browser opens a co-editing
+// room with. The gateway calls it for the signed-in user.
+service CollabTokenService {
+  // IssueToken authorizes the caller to edit the draft and mints a token for
+  // the caller's own actor, read from the go-grpc-actor metadata. During
+  // act-as the token names the target and carries the real admin.
+  rpc IssueToken(IssueTokenRequest) returns (IssueTokenResponse);
+}
+
+message IssueTokenRequest {
+  // Required.
+  string policy_id = 1;
+  // Required. The draft version the room is keyed by.
+  string draft_id = 2;
+  // The template version the draft is pinned to; empty for a freeform draft.
+  // Carried unchanged to core with every snapshot.
+  string template_version_id = 3;
+}
+
+message IssueTokenResponse {
+  string token = 1;
+  // The websocket path, relative to the gateway origin unless the deployment
+  // sets an explicit base: "/collab/ws/<draft_id>".
+  string ws_url = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+// CollabRoomService acts on a running room from outside the process. It mints
+// nothing. The gateway calls it around a publish: FlushDraft, then core's
+// PublishDraft, then NotifyDraftPublished.
+service CollabRoomService {
+  // FlushDraft sends the live room's newest checkpoint to core and returns
+  // once core has answered, waiting out a debounced flush already in flight.
+  // The caller must not publish when it returns an error.
+  rpc FlushDraft(FlushDraftRequest) returns (FlushDraftResponse);
+  // NotifyDraftPublished latches the room read-only and tells every editor
+  // which version went live. Call it after core confirms the publish.
+  rpc NotifyDraftPublished(NotifyDraftPublishedRequest) returns (NotifyDraftPublishedResponse);
+}
+
+message FlushDraftRequest {
+  // Required. The draft the room is keyed by.
+  string draft_id = 1;
+  // Required. Checked against the room's own policy; a mismatch is refused.
+  string policy_id = 2;
+}
+
+// Only the newest checkpoint the room has received can be flushed: the relay
+// keeps no document of its own.
+message FlushDraftResponse {
+  // False is the normal case: nobody is editing the draft, so core already
+  // holds the newest content.
+  bool room_found = 1;
+  // True when this call sent a checkpoint core had not yet accepted.
+  bool content_flushed = 2;
+}
+
+message NotifyDraftPublishedRequest {
+  // Required. The draft the room is keyed by; core publishes the draft row in
+  // place, so it is also the published version's id.
+  string draft_id = 1;
+  // Required. Checked against the room's own policy; a mismatch is refused.
+  string policy_id = 2;
+  // Required and positive: 0 is core's draft sentinel.
+  int32 version_number = 3;
+}
+
+message NotifyDraftPublishedResponse {
+  // False is the normal case: nobody was editing the draft.
+  bool room_notified = 1;
+}
