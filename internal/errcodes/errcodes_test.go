@@ -59,10 +59,12 @@ func TestRefusalCodesKeepTheirStatusAndSymbol(t *testing.T) {
 	}
 }
 
-func TestFlushRejectedCarriesCoreReasonInMetadataOnly(t *testing.T) {
+// The author has to fix what core refused before publishing, so core's
+// reason reaches the caller, in the message and in the metadata.
+func TestFlushRejectedCarriesCoreReason(t *testing.T) {
 	st := status.Convert(errcodes.New(context.Background(), errcodes.CodeFlushRejected,
 		"reason", "grpc_error", "detail", "InvalidArgument: content validation: section missing"))
-	require.NotContains(t, st.Message(), "section missing", "core's text stays out of the user message")
+	require.Equal(t, "The latest edits couldn't be saved, so the draft wasn't published: InvalidArgument: content validation: section missing", st.Message())
 	info, _ := apperrgrpc.FromStatus(st)
 	require.Equal(t, "grpc_error", info.Metadata["reason"])
 	require.Equal(t, "InvalidArgument: content validation: section missing", info.Metadata["detail"])

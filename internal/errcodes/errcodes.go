@@ -54,7 +54,7 @@ func Entries() []apperr.Entry {
 			Title: "room", Cause: "the live room for the draft belongs to a different policy than the request names, so the room is left alone"},
 		{Code: CodeFlushRejected, Symbol: "FLUSH_REJECTED", Category: apperr.CategoryFailedPrecondition,
 			Title: "flush", Cause: "core refused the live room's newest checkpoint (reason and detail in the metadata), so core doesn't hold the room's content",
-			UserSafe: true, Message: "The latest edits couldn't be saved, so the draft wasn't published. Fix the problem shown in the editor, then publish again."},
+			UserSafe: true, Message: "The latest edits couldn't be saved, so the draft wasn't published: {detail}"},
 		{Code: CodeFlushUnavailable, Symbol: "FLUSH_UNAVAILABLE", Category: apperr.CategoryUnavailable,
 			Title: "flush", Cause: "core couldn't be reached to save the live room's newest checkpoint; it stays queued for a retry",
 			UserSafe: true, Message: "The latest edits couldn't be saved yet, so the draft wasn't published. Try again in a moment."},
