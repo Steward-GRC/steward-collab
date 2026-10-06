@@ -35,7 +35,9 @@ Every call but health needs a service-account token. Refusals are logged and aud
 - `PermissionDenied`: a valid token from a service account the method doesn't list, or one that
   isn't in `WORKLOAD_ALLOWED_SERVICEACCOUNTS`.
 - `Unavailable`: the JWKS hasn't loaded, so no token can be checked. Readiness reports
-  `workloadauth` down meanwhile.
+  `workloadauth` down meanwhile. A `status 401` in the `JWKS refresh failed` log line means the API
+  server refused `WORKLOAD_OIDC_BEARER_FILE`: it must hold a token with the API server's own
+  audience, not the `steward` caller token.
 
 ## Snapshots that don't persist
 
