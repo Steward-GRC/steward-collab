@@ -33,6 +33,9 @@ The image: `docker build --build-arg VERSION=<tag> --build-arg COMMIT=<sha> .`
 - [Runbook](docs/runbook.md)
 - [y-protocols wire fixtures](test/wire/README.md)
 
+- [Contributing](https://github.com/Steward-GRC/.github/blob/main/.github/CONTRIBUTING.md) and
+  [security](https://github.com/Steward-GRC/.github/blob/main/.github/SECURITY.md)
+
 ## 🛠 Develop
 
 ```bash
