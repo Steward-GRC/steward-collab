@@ -79,7 +79,8 @@ type IdentityReadServiceClient interface {
 	// creates the account on first sight (just-in-time), unless the user's SSO
 	// connection turned that off.
 	ResolveClaims(ctx context.Context, in *ResolveClaimsRequest, opts ...grpc.CallOption) (*ResolveClaimsResponse, error)
-	// GetUser fetches one user by id.
+	// GetUser fetches one user by id. With a session_id it also records that
+	// sign-in session as just used (see Session.last_seen_at).
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	// GetUserByEmail finds one user by exact, case-insensitive email, across
 	// local and SSO accounts. It never creates one; NotFound when none matches.
@@ -650,7 +651,8 @@ type IdentityReadServiceServer interface {
 	// creates the account on first sight (just-in-time), unless the user's SSO
 	// connection turned that off.
 	ResolveClaims(context.Context, *ResolveClaimsRequest) (*ResolveClaimsResponse, error)
-	// GetUser fetches one user by id.
+	// GetUser fetches one user by id. With a session_id it also records that
+	// sign-in session as just used (see Session.last_seen_at).
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	// GetUserByEmail finds one user by exact, case-insensitive email, across
 	// local and SSO accounts. It never creates one; NotFound when none matches.

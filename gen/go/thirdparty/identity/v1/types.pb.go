@@ -808,7 +808,13 @@ type Session struct {
 	// False once the session is revoked or expired.
 	Active bool `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
 	// The user agent of the device that last used the session.
-	UserAgent     string `protobuf:"bytes,7,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"`
+	UserAgent string `protobuf:"bytes,7,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"`
+	// The IP address of the device that last used the session; empty when
+	// Kratos recorded none for it.
+	ClientIp string `protobuf:"bytes,8,opt,name=client_ip,json=clientIp,proto3" json:"client_ip,omitempty"`
+	// RFC 3339 time the session was last used for an authenticated request, to
+	// within the throttle window; empty when it was never seen.
+	LastSeenAt    string `protobuf:"bytes,9,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -888,6 +894,20 @@ func (x *Session) GetActive() bool {
 func (x *Session) GetUserAgent() string {
 	if x != nil {
 		return x.UserAgent
+	}
+	return ""
+}
+
+func (x *Session) GetClientIp() string {
+	if x != nil {
+		return x.ClientIp
+	}
+	return ""
+}
+
+func (x *Session) GetLastSeenAt() string {
+	if x != nil {
+		return x.LastSeenAt
 	}
 	return ""
 }
@@ -1785,9 +1805,14 @@ type Organization struct {
 	JitEnabled bool `protobuf:"varint,10,opt,name=jit_enabled,json=jitEnabled,proto3" json:"jit_enabled,omitempty"`
 	// When true, the organisation's users may also sign in with a local
 	// password.
-	AllowLocal    bool `protobuf:"varint,11,opt,name=allow_local,json=allowLocal,proto3" json:"allow_local,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	AllowLocal bool `protobuf:"varint,11,opt,name=allow_local,json=allowLocal,proto3" json:"allow_local,omitempty"`
+	// True when the stored client secret reference was cleared because it
+	// wasn't a key reference (an older row that held the secret itself). An
+	// admin must enter the client secret again; sign-in through Polis keeps
+	// working meanwhile.
+	SecretReentryRequired bool `protobuf:"varint,12,opt,name=secret_reentry_required,json=secretReentryRequired,proto3" json:"secret_reentry_required,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *Organization) Reset() {
@@ -1893,6 +1918,13 @@ func (x *Organization) GetJitEnabled() bool {
 func (x *Organization) GetAllowLocal() bool {
 	if x != nil {
 		return x.AllowLocal
+	}
+	return false
+}
+
+func (x *Organization) GetSecretReentryRequired() bool {
+	if x != nil {
+		return x.SecretReentryRequired
 	}
 	return false
 }
@@ -2097,7 +2129,7 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"\bcategory\x18\x02 \x01(\tR\bcategory\"r\n" +
 	"\x0ePolicyOverride\x12#\n" +
 	"\rpolicy_number\x18\x01 \x01(\tR\fpolicyNumber\x12;\n" +
-	"\x06effect\x18\x02 \x01(\x0e2#.steward.identity.v1.OverrideEffectR\x06effect\"\xdf\x01\n" +
+	"\x06effect\x18\x02 \x01(\x0e2#.steward.identity.v1.OverrideEffectR\x06effect\"\x9e\x02\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
@@ -2108,7 +2140,10 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"expires_at\x18\x05 \x01(\tR\texpiresAt\x12\x16\n" +
 	"\x06active\x18\x06 \x01(\bR\x06active\x12\x1d\n" +
 	"\n" +
-	"user_agent\x18\a \x01(\tR\tuserAgent\"g\n" +
+	"user_agent\x18\a \x01(\tR\tuserAgent\x12\x1b\n" +
+	"\tclient_ip\x18\b \x01(\tR\bclientIp\x12 \n" +
+	"\flast_seen_at\x18\t \x01(\tR\n" +
+	"lastSeenAt\"g\n" +
 	"\n" +
 	"UserFactor\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1f\n" +
@@ -2183,7 +2218,7 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"\x05items\x18\x03 \x03(\v2,.steward.identity.v1.UserDeletionPreviewItemR\x05items\x12D\n" +
 	"\bwarnings\x18\x04 \x03(\v2(.steward.identity.v1.UserDeletionWarningR\bwarnings\x12#\n" +
 	"\rblocks_delete\x18\x05 \x01(\bR\fblocksDelete\x123\n" +
-	"\x15locally_authenticable\x18\x06 \x01(\bR\x14locallyAuthenticable\"\xe9\x02\n" +
+	"\x15locally_authenticable\x18\x06 \x01(\bR\x14locallyAuthenticable\"\xa1\x03\n" +
 	"\fOrganization\x12\x16\n" +
 	"\x06domain\x18\x01 \x01(\tR\x06domain\x12\x19\n" +
 	"\borg_name\x18\x02 \x01(\tR\aorgName\x12\x1a\n" +
@@ -2199,7 +2234,8 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	" \x01(\bR\n" +
 	"jitEnabled\x12\x1f\n" +
 	"\vallow_local\x18\v \x01(\bR\n" +
-	"allowLocal\"\x9e\x01\n" +
+	"allowLocal\x126\n" +
+	"\x17secret_reentry_required\x18\f \x01(\bR\x15secretReentryRequired\"\x9e\x01\n" +
 	"\fGroupMapping\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
 	"\rconnection_id\x18\x02 \x01(\tR\fconnectionId\x121\n" +

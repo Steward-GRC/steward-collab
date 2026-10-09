@@ -26,6 +26,10 @@ const (
 	AuditService_ExportAuditSegment_FullMethodName = "/steward.audit.v1.AuditService/ExportAuditSegment"
 	AuditService_VerifyAuditChain_FullMethodName   = "/steward.audit.v1.AuditService/VerifyAuditChain"
 	AuditService_ListRecentEvents_FullMethodName   = "/steward.audit.v1.AuditService/ListRecentEvents"
+	AuditService_ShredSubject_FullMethodName       = "/steward.audit.v1.AuditService/ShredSubject"
+	AuditService_CreateLegalHold_FullMethodName    = "/steward.audit.v1.AuditService/CreateLegalHold"
+	AuditService_ListLegalHolds_FullMethodName     = "/steward.audit.v1.AuditService/ListLegalHolds"
+	AuditService_ReleaseLegalHold_FullMethodName   = "/steward.audit.v1.AuditService/ReleaseLegalHold"
 )
 
 // AuditServiceClient is the client API for AuditService service.
@@ -45,6 +49,19 @@ type AuditServiceClient interface {
 	// ListRecentEvents returns records that occurred at or after a time, for a
 	// polling tail.
 	ListRecentEvents(ctx context.Context, in *ListRecentEventsRequest, opts ...grpc.CallOption) (*ListRecentEventsResponse, error)
+	// ShredSubject crypto-shreds a subject: its key is destroyed and its
+	// personal data cleared from activity records. Needs compliance.manage; the
+	// shred is itself recorded as "subject.shredded".
+	ShredSubject(ctx context.Context, in *ShredSubjectRequest, opts ...grpc.CallOption) (*ShredSubjectResponse, error)
+	// CreateLegalHold stops the retention purge for matching records. Needs
+	// compliance.manage; recorded as "legal_hold.created".
+	CreateLegalHold(ctx context.Context, in *CreateLegalHoldRequest, opts ...grpc.CallOption) (*CreateLegalHoldResponse, error)
+	// ListLegalHolds lists the holds. Needs compliance.manage; recorded as
+	// "legal_hold.listed".
+	ListLegalHolds(ctx context.Context, in *ListLegalHoldsRequest, opts ...grpc.CallOption) (*ListLegalHoldsResponse, error)
+	// ReleaseLegalHold lifts a hold. Needs compliance.manage; recorded as
+	// "legal_hold.released".
+	ReleaseLegalHold(ctx context.Context, in *ReleaseLegalHoldRequest, opts ...grpc.CallOption) (*ReleaseLegalHoldResponse, error)
 }
 
 type auditServiceClient struct {
@@ -95,6 +112,46 @@ func (c *auditServiceClient) ListRecentEvents(ctx context.Context, in *ListRecen
 	return out, nil
 }
 
+func (c *auditServiceClient) ShredSubject(ctx context.Context, in *ShredSubjectRequest, opts ...grpc.CallOption) (*ShredSubjectResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ShredSubjectResponse)
+	err := c.cc.Invoke(ctx, AuditService_ShredSubject_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *auditServiceClient) CreateLegalHold(ctx context.Context, in *CreateLegalHoldRequest, opts ...grpc.CallOption) (*CreateLegalHoldResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateLegalHoldResponse)
+	err := c.cc.Invoke(ctx, AuditService_CreateLegalHold_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *auditServiceClient) ListLegalHolds(ctx context.Context, in *ListLegalHoldsRequest, opts ...grpc.CallOption) (*ListLegalHoldsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListLegalHoldsResponse)
+	err := c.cc.Invoke(ctx, AuditService_ListLegalHolds_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *auditServiceClient) ReleaseLegalHold(ctx context.Context, in *ReleaseLegalHoldRequest, opts ...grpc.CallOption) (*ReleaseLegalHoldResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReleaseLegalHoldResponse)
+	err := c.cc.Invoke(ctx, AuditService_ReleaseLegalHold_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuditServiceServer is the server API for AuditService service.
 // All implementations must embed UnimplementedAuditServiceServer
 // for forward compatibility.
@@ -112,6 +169,19 @@ type AuditServiceServer interface {
 	// ListRecentEvents returns records that occurred at or after a time, for a
 	// polling tail.
 	ListRecentEvents(context.Context, *ListRecentEventsRequest) (*ListRecentEventsResponse, error)
+	// ShredSubject crypto-shreds a subject: its key is destroyed and its
+	// personal data cleared from activity records. Needs compliance.manage; the
+	// shred is itself recorded as "subject.shredded".
+	ShredSubject(context.Context, *ShredSubjectRequest) (*ShredSubjectResponse, error)
+	// CreateLegalHold stops the retention purge for matching records. Needs
+	// compliance.manage; recorded as "legal_hold.created".
+	CreateLegalHold(context.Context, *CreateLegalHoldRequest) (*CreateLegalHoldResponse, error)
+	// ListLegalHolds lists the holds. Needs compliance.manage; recorded as
+	// "legal_hold.listed".
+	ListLegalHolds(context.Context, *ListLegalHoldsRequest) (*ListLegalHoldsResponse, error)
+	// ReleaseLegalHold lifts a hold. Needs compliance.manage; recorded as
+	// "legal_hold.released".
+	ReleaseLegalHold(context.Context, *ReleaseLegalHoldRequest) (*ReleaseLegalHoldResponse, error)
 	mustEmbedUnimplementedAuditServiceServer()
 }
 
@@ -133,6 +203,18 @@ func (UnimplementedAuditServiceServer) VerifyAuditChain(context.Context, *Verify
 }
 func (UnimplementedAuditServiceServer) ListRecentEvents(context.Context, *ListRecentEventsRequest) (*ListRecentEventsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListRecentEvents not implemented")
+}
+func (UnimplementedAuditServiceServer) ShredSubject(context.Context, *ShredSubjectRequest) (*ShredSubjectResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ShredSubject not implemented")
+}
+func (UnimplementedAuditServiceServer) CreateLegalHold(context.Context, *CreateLegalHoldRequest) (*CreateLegalHoldResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateLegalHold not implemented")
+}
+func (UnimplementedAuditServiceServer) ListLegalHolds(context.Context, *ListLegalHoldsRequest) (*ListLegalHoldsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLegalHolds not implemented")
+}
+func (UnimplementedAuditServiceServer) ReleaseLegalHold(context.Context, *ReleaseLegalHoldRequest) (*ReleaseLegalHoldResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReleaseLegalHold not implemented")
 }
 func (UnimplementedAuditServiceServer) mustEmbedUnimplementedAuditServiceServer() {}
 func (UnimplementedAuditServiceServer) testEmbeddedByValue()                      {}
@@ -227,6 +309,78 @@ func _AuditService_ListRecentEvents_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuditService_ShredSubject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShredSubjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuditServiceServer).ShredSubject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuditService_ShredSubject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuditServiceServer).ShredSubject(ctx, req.(*ShredSubjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuditService_CreateLegalHold_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateLegalHoldRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuditServiceServer).CreateLegalHold(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuditService_CreateLegalHold_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuditServiceServer).CreateLegalHold(ctx, req.(*CreateLegalHoldRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuditService_ListLegalHolds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListLegalHoldsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuditServiceServer).ListLegalHolds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuditService_ListLegalHolds_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuditServiceServer).ListLegalHolds(ctx, req.(*ListLegalHoldsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuditService_ReleaseLegalHold_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleaseLegalHoldRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuditServiceServer).ReleaseLegalHold(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuditService_ReleaseLegalHold_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuditServiceServer).ReleaseLegalHold(ctx, req.(*ReleaseLegalHoldRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuditService_ServiceDesc is the grpc.ServiceDesc for AuditService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -249,6 +403,22 @@ var AuditService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRecentEvents",
 			Handler:    _AuditService_ListRecentEvents_Handler,
+		},
+		{
+			MethodName: "ShredSubject",
+			Handler:    _AuditService_ShredSubject_Handler,
+		},
+		{
+			MethodName: "CreateLegalHold",
+			Handler:    _AuditService_CreateLegalHold_Handler,
+		},
+		{
+			MethodName: "ListLegalHolds",
+			Handler:    _AuditService_ListLegalHolds_Handler,
+		},
+		{
+			MethodName: "ReleaseLegalHold",
+			Handler:    _AuditService_ReleaseLegalHold_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

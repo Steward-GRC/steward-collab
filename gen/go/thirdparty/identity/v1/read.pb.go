@@ -175,8 +175,12 @@ func (x *ResolveClaimsResponse) GetUser() *User {
 }
 
 type GetUserRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// The sign-in session the request runs on, when it comes from a signed-in
+	// browser. Identity records it as seen, at most once per throttle window
+	// (SESSION_LAST_SEEN_THROTTLE). Empty records nothing.
+	SessionId     string `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -214,6 +218,13 @@ func (*GetUserRequest) Descriptor() ([]byte, []int) {
 func (x *GetUserRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
+	}
+	return ""
+}
+
+func (x *GetUserRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
 	}
 	return ""
 }
@@ -4180,9 +4191,11 @@ const file_steward_identity_v1_read_proto_rawDesc = "" +
 	"\n" +
 	"idp_groups\x18\b \x03(\tR\tidpGroups\"F\n" +
 	"\x15ResolveClaimsResponse\x12-\n" +
-	"\x04user\x18\x01 \x01(\v2\x19.steward.identity.v1.UserR\x04user\")\n" +
+	"\x04user\x18\x01 \x01(\v2\x19.steward.identity.v1.UserR\x04user\"H\n" +
 	"\x0eGetUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"@\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\"@\n" +
 	"\x0fGetUserResponse\x12-\n" +
 	"\x04user\x18\x01 \x01(\v2\x19.steward.identity.v1.UserR\x04user\"-\n" +
 	"\x15GetUserByEmailRequest\x12\x14\n" +
