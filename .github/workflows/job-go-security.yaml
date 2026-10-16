@@ -72,8 +72,11 @@ jobs:
         with:
           path: ${{ runner.temp }}/govulncheck/bin
           key: ${{ steps.govulncheck-cache.outputs.cache-primary-key }}
+      # GO-2026-6443 excluded: gRPC xDS-routing panic; Steward uses no xDS routing. Tracked in Steward-GRC/steward-core#13. Remove when grpc 1.84.1+ or 1.85 ships.
       - name: Run govulncheck
-        run: '"$RUNNER_TEMP/govulncheck/bin/govulncheck" ./...'
+        env:
+          GOVULNCHECK: ${{ runner.temp }}/govulncheck/bin/govulncheck
+        run: scripts/govulncheck.sh
 
   gosec:
     name: 🔐 Gosec
