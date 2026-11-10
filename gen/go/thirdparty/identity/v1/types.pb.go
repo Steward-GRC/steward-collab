@@ -319,6 +319,70 @@ func (DeletionItemKind) EnumDescriptor() ([]byte, []int) {
 	return file_steward_identity_v1_types_proto_rawDescGZIP(), []int{4}
 }
 
+// HardResetState is where a hard reset request stands.
+type HardResetState int32
+
+const (
+	HardResetState_HARD_RESET_STATE_UNSPECIFIED HardResetState = 0
+	// Waiting for a second root admin.
+	HardResetState_HARD_RESET_STATE_PENDING HardResetState = 1
+	// Approved; usable once until approval_expires_at.
+	HardResetState_HARD_RESET_STATE_APPROVED HardResetState = 2
+	// Withdrawn by its requester.
+	HardResetState_HARD_RESET_STATE_CANCELLED HardResetState = 3
+	// Redeemed by the module's service.
+	HardResetState_HARD_RESET_STATE_CONSUMED HardResetState = 4
+	// Not approved, or not used, in time.
+	HardResetState_HARD_RESET_STATE_EXPIRED HardResetState = 5
+)
+
+// Enum value maps for HardResetState.
+var (
+	HardResetState_name = map[int32]string{
+		0: "HARD_RESET_STATE_UNSPECIFIED",
+		1: "HARD_RESET_STATE_PENDING",
+		2: "HARD_RESET_STATE_APPROVED",
+		3: "HARD_RESET_STATE_CANCELLED",
+		4: "HARD_RESET_STATE_CONSUMED",
+		5: "HARD_RESET_STATE_EXPIRED",
+	}
+	HardResetState_value = map[string]int32{
+		"HARD_RESET_STATE_UNSPECIFIED": 0,
+		"HARD_RESET_STATE_PENDING":     1,
+		"HARD_RESET_STATE_APPROVED":    2,
+		"HARD_RESET_STATE_CANCELLED":   3,
+		"HARD_RESET_STATE_CONSUMED":    4,
+		"HARD_RESET_STATE_EXPIRED":     5,
+	}
+)
+
+func (x HardResetState) Enum() *HardResetState {
+	p := new(HardResetState)
+	*p = x
+	return p
+}
+
+func (x HardResetState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (HardResetState) Descriptor() protoreflect.EnumDescriptor {
+	return file_steward_identity_v1_types_proto_enumTypes[5].Descriptor()
+}
+
+func (HardResetState) Type() protoreflect.EnumType {
+	return &file_steward_identity_v1_types_proto_enumTypes[5]
+}
+
+func (x HardResetState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use HardResetState.Descriptor instead.
+func (HardResetState) EnumDescriptor() ([]byte, []int) {
+	return file_steward_identity_v1_types_proto_rawDescGZIP(), []int{5}
+}
+
 // User is a platform user. Roles and groups are plural: callers never assume
 // one of each.
 type User struct {
@@ -340,7 +404,7 @@ type User struct {
 	IdpGroups []string `protobuf:"bytes,8,rep,name=idp_groups,json=idpGroups,proto3" json:"idp_groups,omitempty"`
 	// Per-policy allow and deny overrides.
 	PolicyOverrides []*PolicyOverride `protobuf:"bytes,9,rep,name=policy_overrides,json=policyOverrides,proto3" json:"policy_overrides,omitempty"`
-	// The protected root site-admin.
+	// A root admin. There may be several; the last one can't lose the role.
 	IsRoot bool `protobuf:"varint,10,opt,name=is_root,json=isRoot,proto3" json:"is_root,omitempty"`
 	// The individual policy.read_sensitive grant (root-only to assign).
 	ReadSensitiveGrant bool `protobuf:"varint,11,opt,name=read_sensitive_grant,json=readSensitiveGrant,proto3" json:"read_sensitive_grant,omitempty"`
@@ -808,7 +872,13 @@ type Session struct {
 	// False once the session is revoked or expired.
 	Active bool `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
 	// The user agent of the device that last used the session.
-	UserAgent     string `protobuf:"bytes,7,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"`
+	UserAgent string `protobuf:"bytes,7,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"`
+	// The IP address of the device that last used the session; empty when
+	// Kratos recorded none for it.
+	ClientIp string `protobuf:"bytes,8,opt,name=client_ip,json=clientIp,proto3" json:"client_ip,omitempty"`
+	// RFC 3339 time the session was last used for an authenticated request, to
+	// within the throttle window; empty when it was never seen.
+	LastSeenAt    string `protobuf:"bytes,9,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -888,6 +958,20 @@ func (x *Session) GetActive() bool {
 func (x *Session) GetUserAgent() string {
 	if x != nil {
 		return x.UserAgent
+	}
+	return ""
+}
+
+func (x *Session) GetClientIp() string {
+	if x != nil {
+		return x.ClientIp
+	}
+	return ""
+}
+
+func (x *Session) GetLastSeenAt() string {
+	if x != nil {
+		return x.LastSeenAt
 	}
 	return ""
 }
@@ -1785,9 +1869,14 @@ type Organization struct {
 	JitEnabled bool `protobuf:"varint,10,opt,name=jit_enabled,json=jitEnabled,proto3" json:"jit_enabled,omitempty"`
 	// When true, the organisation's users may also sign in with a local
 	// password.
-	AllowLocal    bool `protobuf:"varint,11,opt,name=allow_local,json=allowLocal,proto3" json:"allow_local,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	AllowLocal bool `protobuf:"varint,11,opt,name=allow_local,json=allowLocal,proto3" json:"allow_local,omitempty"`
+	// True when the stored client secret reference was cleared because it
+	// wasn't a key reference (an older row that held the secret itself). An
+	// admin must enter the client secret again; sign-in through Polis keeps
+	// working meanwhile.
+	SecretReentryRequired bool `protobuf:"varint,12,opt,name=secret_reentry_required,json=secretReentryRequired,proto3" json:"secret_reentry_required,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *Organization) Reset() {
@@ -1893,6 +1982,13 @@ func (x *Organization) GetJitEnabled() bool {
 func (x *Organization) GetAllowLocal() bool {
 	if x != nil {
 		return x.AllowLocal
+	}
+	return false
+}
+
+func (x *Organization) GetSecretReentryRequired() bool {
+	if x != nil {
+		return x.SecretReentryRequired
 	}
 	return false
 }
@@ -2047,6 +2143,153 @@ func (x *SPCertificate) GetActive() bool {
 	return false
 }
 
+// HardResetRequest is one two-person hard reset of a module. Times are RFC
+// 3339; an empty time hasn't happened.
+type HardResetRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Module string                 `protobuf:"bytes,2,opt,name=module,proto3" json:"module,omitempty"`
+	Reason string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	State  HardResetState         `protobuf:"varint,4,opt,name=state,proto3,enum=steward.identity.v1.HardResetState" json:"state,omitempty"`
+	// The requesting root admin's user id.
+	RequestedBy string `protobuf:"bytes,5,opt,name=requested_by,json=requestedBy,proto3" json:"requested_by,omitempty"`
+	RequestedAt string `protobuf:"bytes,6,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"`
+	// The request must be approved before this.
+	ExpiresAt string `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// The approving root admin's user id.
+	ApprovedBy string `protobuf:"bytes,8,opt,name=approved_by,json=approvedBy,proto3" json:"approved_by,omitempty"`
+	ApprovedAt string `protobuf:"bytes,9,opt,name=approved_at,json=approvedAt,proto3" json:"approved_at,omitempty"`
+	// The approval must be used before this.
+	ApprovalExpiresAt string `protobuf:"bytes,10,opt,name=approval_expires_at,json=approvalExpiresAt,proto3" json:"approval_expires_at,omitempty"`
+	CancelledAt       string `protobuf:"bytes,11,opt,name=cancelled_at,json=cancelledAt,proto3" json:"cancelled_at,omitempty"`
+	ConsumedAt        string `protobuf:"bytes,12,opt,name=consumed_at,json=consumedAt,proto3" json:"consumed_at,omitempty"`
+	// The service that redeemed it.
+	ConsumedBy    string `protobuf:"bytes,13,opt,name=consumed_by,json=consumedBy,proto3" json:"consumed_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HardResetRequest) Reset() {
+	*x = HardResetRequest{}
+	mi := &file_steward_identity_v1_types_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HardResetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HardResetRequest) ProtoMessage() {}
+
+func (x *HardResetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_identity_v1_types_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HardResetRequest.ProtoReflect.Descriptor instead.
+func (*HardResetRequest) Descriptor() ([]byte, []int) {
+	return file_steward_identity_v1_types_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *HardResetRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetModule() string {
+	if x != nil {
+		return x.Module
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetState() HardResetState {
+	if x != nil {
+		return x.State
+	}
+	return HardResetState_HARD_RESET_STATE_UNSPECIFIED
+}
+
+func (x *HardResetRequest) GetRequestedBy() string {
+	if x != nil {
+		return x.RequestedBy
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetRequestedAt() string {
+	if x != nil {
+		return x.RequestedAt
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetExpiresAt() string {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetApprovedBy() string {
+	if x != nil {
+		return x.ApprovedBy
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetApprovedAt() string {
+	if x != nil {
+		return x.ApprovedAt
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetApprovalExpiresAt() string {
+	if x != nil {
+		return x.ApprovalExpiresAt
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetCancelledAt() string {
+	if x != nil {
+		return x.CancelledAt
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetConsumedAt() string {
+	if x != nil {
+		return x.ConsumedAt
+	}
+	return ""
+}
+
+func (x *HardResetRequest) GetConsumedBy() string {
+	if x != nil {
+		return x.ConsumedBy
+	}
+	return ""
+}
+
 var File_steward_identity_v1_types_proto protoreflect.FileDescriptor
 
 const file_steward_identity_v1_types_proto_rawDesc = "" +
@@ -2097,7 +2340,7 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"\bcategory\x18\x02 \x01(\tR\bcategory\"r\n" +
 	"\x0ePolicyOverride\x12#\n" +
 	"\rpolicy_number\x18\x01 \x01(\tR\fpolicyNumber\x12;\n" +
-	"\x06effect\x18\x02 \x01(\x0e2#.steward.identity.v1.OverrideEffectR\x06effect\"\xdf\x01\n" +
+	"\x06effect\x18\x02 \x01(\x0e2#.steward.identity.v1.OverrideEffectR\x06effect\"\x9e\x02\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
@@ -2108,7 +2351,10 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"expires_at\x18\x05 \x01(\tR\texpiresAt\x12\x16\n" +
 	"\x06active\x18\x06 \x01(\bR\x06active\x12\x1d\n" +
 	"\n" +
-	"user_agent\x18\a \x01(\tR\tuserAgent\"g\n" +
+	"user_agent\x18\a \x01(\tR\tuserAgent\x12\x1b\n" +
+	"\tclient_ip\x18\b \x01(\tR\bclientIp\x12 \n" +
+	"\flast_seen_at\x18\t \x01(\tR\n" +
+	"lastSeenAt\"g\n" +
 	"\n" +
 	"UserFactor\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1f\n" +
@@ -2183,7 +2429,7 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"\x05items\x18\x03 \x03(\v2,.steward.identity.v1.UserDeletionPreviewItemR\x05items\x12D\n" +
 	"\bwarnings\x18\x04 \x03(\v2(.steward.identity.v1.UserDeletionWarningR\bwarnings\x12#\n" +
 	"\rblocks_delete\x18\x05 \x01(\bR\fblocksDelete\x123\n" +
-	"\x15locally_authenticable\x18\x06 \x01(\bR\x14locallyAuthenticable\"\xe9\x02\n" +
+	"\x15locally_authenticable\x18\x06 \x01(\bR\x14locallyAuthenticable\"\xa1\x03\n" +
 	"\fOrganization\x12\x16\n" +
 	"\x06domain\x18\x01 \x01(\tR\x06domain\x12\x19\n" +
 	"\borg_name\x18\x02 \x01(\tR\aorgName\x12\x1a\n" +
@@ -2199,7 +2445,8 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	" \x01(\bR\n" +
 	"jitEnabled\x12\x1f\n" +
 	"\vallow_local\x18\v \x01(\bR\n" +
-	"allowLocal\"\x9e\x01\n" +
+	"allowLocal\x126\n" +
+	"\x17secret_reentry_required\x18\f \x01(\bR\x15secretReentryRequired\"\x9e\x01\n" +
 	"\fGroupMapping\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
 	"\rconnection_id\x18\x02 \x01(\tR\fconnectionId\x121\n" +
@@ -2210,7 +2457,27 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"\bcert_pem\x18\x02 \x01(\tR\acertPem\x12&\n" +
 	"\x0fsp_metadata_xml\x18\x03 \x01(\tR\rspMetadataXml\x12\x1b\n" +
 	"\tnot_after\x18\x04 \x01(\tR\bnotAfter\x12\x16\n" +
-	"\x06active\x18\x05 \x01(\bR\x06active*f\n" +
+	"\x06active\x18\x05 \x01(\bR\x06active\"\xc9\x03\n" +
+	"\x10HardResetRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06module\x18\x02 \x01(\tR\x06module\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x129\n" +
+	"\x05state\x18\x04 \x01(\x0e2#.steward.identity.v1.HardResetStateR\x05state\x12!\n" +
+	"\frequested_by\x18\x05 \x01(\tR\vrequestedBy\x12!\n" +
+	"\frequested_at\x18\x06 \x01(\tR\vrequestedAt\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\a \x01(\tR\texpiresAt\x12\x1f\n" +
+	"\vapproved_by\x18\b \x01(\tR\n" +
+	"approvedBy\x12\x1f\n" +
+	"\vapproved_at\x18\t \x01(\tR\n" +
+	"approvedAt\x12.\n" +
+	"\x13approval_expires_at\x18\n" +
+	" \x01(\tR\x11approvalExpiresAt\x12!\n" +
+	"\fcancelled_at\x18\v \x01(\tR\vcancelledAt\x12\x1f\n" +
+	"\vconsumed_at\x18\f \x01(\tR\n" +
+	"consumedAt\x12\x1f\n" +
+	"\vconsumed_by\x18\r \x01(\tR\n" +
+	"consumedBy*f\n" +
 	"\x0eOverrideEffect\x12\x1f\n" +
 	"\x1bOVERRIDE_EFFECT_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15OVERRIDE_EFFECT_ALLOW\x10\x01\x12\x18\n" +
@@ -2239,7 +2506,14 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"\x1fDELETION_ITEM_KIND_OWNED_POLICY\x10\x02\x12!\n" +
 	"\x1dDELETION_ITEM_KIND_RACI_GRANT\x10\x03\x12!\n" +
 	"\x1dDELETION_ITEM_KIND_ACCESS_ROW\x10\x04\x12!\n" +
-	"\x1dDELETION_ITEM_KIND_CREDENTIAL\x10\x05BPZNgithub.com/Steward-GRC/steward-collab/gen/go/thirdparty/identity/v1;identityv1b\x06proto3"
+	"\x1dDELETION_ITEM_KIND_CREDENTIAL\x10\x05*\xcc\x01\n" +
+	"\x0eHardResetState\x12 \n" +
+	"\x1cHARD_RESET_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18HARD_RESET_STATE_PENDING\x10\x01\x12\x1d\n" +
+	"\x19HARD_RESET_STATE_APPROVED\x10\x02\x12\x1e\n" +
+	"\x1aHARD_RESET_STATE_CANCELLED\x10\x03\x12\x1d\n" +
+	"\x19HARD_RESET_STATE_CONSUMED\x10\x04\x12\x1c\n" +
+	"\x18HARD_RESET_STATE_EXPIRED\x10\x05BPZNgithub.com/Steward-GRC/steward-collab/gen/go/thirdparty/identity/v1;identityv1b\x06proto3"
 
 var (
 	file_steward_identity_v1_types_proto_rawDescOnce sync.Once
@@ -2253,56 +2527,59 @@ func file_steward_identity_v1_types_proto_rawDescGZIP() []byte {
 	return file_steward_identity_v1_types_proto_rawDescData
 }
 
-var file_steward_identity_v1_types_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_steward_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_steward_identity_v1_types_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_steward_identity_v1_types_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_steward_identity_v1_types_proto_goTypes = []any{
 	(OverrideEffect)(0),             // 0: steward.identity.v1.OverrideEffect
 	(MergeItemKind)(0),              // 1: steward.identity.v1.MergeItemKind
 	(MergeStatus)(0),                // 2: steward.identity.v1.MergeStatus
 	(MergeStepStatus)(0),            // 3: steward.identity.v1.MergeStepStatus
 	(DeletionItemKind)(0),           // 4: steward.identity.v1.DeletionItemKind
-	(*User)(nil),                    // 5: steward.identity.v1.User
-	(*Membership)(nil),              // 6: steward.identity.v1.Membership
-	(*Group)(nil),                   // 7: steward.identity.v1.Group
-	(*ScopedRole)(nil),              // 8: steward.identity.v1.ScopedRole
-	(*PolicyOverride)(nil),          // 9: steward.identity.v1.PolicyOverride
-	(*Session)(nil),                 // 10: steward.identity.v1.Session
-	(*UserFactor)(nil),              // 11: steward.identity.v1.UserFactor
-	(*WebauthnCredential)(nil),      // 12: steward.identity.v1.WebauthnCredential
-	(*MergePreviewItem)(nil),        // 13: steward.identity.v1.MergePreviewItem
-	(*MergeCounts)(nil),             // 14: steward.identity.v1.MergeCounts
-	(*MergeWarning)(nil),            // 15: steward.identity.v1.MergeWarning
-	(*AccountMergePreview)(nil),     // 16: steward.identity.v1.AccountMergePreview
-	(*MergeStepResult)(nil),         // 17: steward.identity.v1.MergeStepResult
-	(*UserDeletionPreviewItem)(nil), // 18: steward.identity.v1.UserDeletionPreviewItem
-	(*UserDeletionCounts)(nil),      // 19: steward.identity.v1.UserDeletionCounts
-	(*UserDeletionWarning)(nil),     // 20: steward.identity.v1.UserDeletionWarning
-	(*UserDeletionPreview)(nil),     // 21: steward.identity.v1.UserDeletionPreview
-	(*Organization)(nil),            // 22: steward.identity.v1.Organization
-	(*GroupMapping)(nil),            // 23: steward.identity.v1.GroupMapping
-	(*SPCertificate)(nil),           // 24: steward.identity.v1.SPCertificate
-	nil,                             // 25: steward.identity.v1.Group.MetadataEntry
+	(HardResetState)(0),             // 5: steward.identity.v1.HardResetState
+	(*User)(nil),                    // 6: steward.identity.v1.User
+	(*Membership)(nil),              // 7: steward.identity.v1.Membership
+	(*Group)(nil),                   // 8: steward.identity.v1.Group
+	(*ScopedRole)(nil),              // 9: steward.identity.v1.ScopedRole
+	(*PolicyOverride)(nil),          // 10: steward.identity.v1.PolicyOverride
+	(*Session)(nil),                 // 11: steward.identity.v1.Session
+	(*UserFactor)(nil),              // 12: steward.identity.v1.UserFactor
+	(*WebauthnCredential)(nil),      // 13: steward.identity.v1.WebauthnCredential
+	(*MergePreviewItem)(nil),        // 14: steward.identity.v1.MergePreviewItem
+	(*MergeCounts)(nil),             // 15: steward.identity.v1.MergeCounts
+	(*MergeWarning)(nil),            // 16: steward.identity.v1.MergeWarning
+	(*AccountMergePreview)(nil),     // 17: steward.identity.v1.AccountMergePreview
+	(*MergeStepResult)(nil),         // 18: steward.identity.v1.MergeStepResult
+	(*UserDeletionPreviewItem)(nil), // 19: steward.identity.v1.UserDeletionPreviewItem
+	(*UserDeletionCounts)(nil),      // 20: steward.identity.v1.UserDeletionCounts
+	(*UserDeletionWarning)(nil),     // 21: steward.identity.v1.UserDeletionWarning
+	(*UserDeletionPreview)(nil),     // 22: steward.identity.v1.UserDeletionPreview
+	(*Organization)(nil),            // 23: steward.identity.v1.Organization
+	(*GroupMapping)(nil),            // 24: steward.identity.v1.GroupMapping
+	(*SPCertificate)(nil),           // 25: steward.identity.v1.SPCertificate
+	(*HardResetRequest)(nil),        // 26: steward.identity.v1.HardResetRequest
+	nil,                             // 27: steward.identity.v1.Group.MetadataEntry
 }
 var file_steward_identity_v1_types_proto_depIdxs = []int32{
-	8,  // 0: steward.identity.v1.User.scoped_roles:type_name -> steward.identity.v1.ScopedRole
-	9,  // 1: steward.identity.v1.User.policy_overrides:type_name -> steward.identity.v1.PolicyOverride
-	6,  // 2: steward.identity.v1.User.memberships:type_name -> steward.identity.v1.Membership
-	25, // 3: steward.identity.v1.Group.metadata:type_name -> steward.identity.v1.Group.MetadataEntry
+	9,  // 0: steward.identity.v1.User.scoped_roles:type_name -> steward.identity.v1.ScopedRole
+	10, // 1: steward.identity.v1.User.policy_overrides:type_name -> steward.identity.v1.PolicyOverride
+	7,  // 2: steward.identity.v1.User.memberships:type_name -> steward.identity.v1.Membership
+	27, // 3: steward.identity.v1.Group.metadata:type_name -> steward.identity.v1.Group.MetadataEntry
 	0,  // 4: steward.identity.v1.PolicyOverride.effect:type_name -> steward.identity.v1.OverrideEffect
 	1,  // 5: steward.identity.v1.MergePreviewItem.kind:type_name -> steward.identity.v1.MergeItemKind
-	14, // 6: steward.identity.v1.AccountMergePreview.counts:type_name -> steward.identity.v1.MergeCounts
-	13, // 7: steward.identity.v1.AccountMergePreview.items:type_name -> steward.identity.v1.MergePreviewItem
-	15, // 8: steward.identity.v1.AccountMergePreview.warnings:type_name -> steward.identity.v1.MergeWarning
+	15, // 6: steward.identity.v1.AccountMergePreview.counts:type_name -> steward.identity.v1.MergeCounts
+	14, // 7: steward.identity.v1.AccountMergePreview.items:type_name -> steward.identity.v1.MergePreviewItem
+	16, // 8: steward.identity.v1.AccountMergePreview.warnings:type_name -> steward.identity.v1.MergeWarning
 	3,  // 9: steward.identity.v1.MergeStepResult.status:type_name -> steward.identity.v1.MergeStepStatus
 	4,  // 10: steward.identity.v1.UserDeletionPreviewItem.kind:type_name -> steward.identity.v1.DeletionItemKind
-	19, // 11: steward.identity.v1.UserDeletionPreview.counts:type_name -> steward.identity.v1.UserDeletionCounts
-	18, // 12: steward.identity.v1.UserDeletionPreview.items:type_name -> steward.identity.v1.UserDeletionPreviewItem
-	20, // 13: steward.identity.v1.UserDeletionPreview.warnings:type_name -> steward.identity.v1.UserDeletionWarning
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	20, // 11: steward.identity.v1.UserDeletionPreview.counts:type_name -> steward.identity.v1.UserDeletionCounts
+	19, // 12: steward.identity.v1.UserDeletionPreview.items:type_name -> steward.identity.v1.UserDeletionPreviewItem
+	21, // 13: steward.identity.v1.UserDeletionPreview.warnings:type_name -> steward.identity.v1.UserDeletionWarning
+	5,  // 14: steward.identity.v1.HardResetRequest.state:type_name -> steward.identity.v1.HardResetState
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_steward_identity_v1_types_proto_init() }
@@ -2315,8 +2592,8 @@ func file_steward_identity_v1_types_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_steward_identity_v1_types_proto_rawDesc), len(file_steward_identity_v1_types_proto_rawDesc)),
-			NumEnums:      5,
-			NumMessages:   21,
+			NumEnums:      6,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
