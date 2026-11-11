@@ -27,6 +27,7 @@ import (
 	rmqotel "github.com/Bugs5382/go-rabbitmq/otel"
 	"google.golang.org/grpc"
 
+	workloadidentity "github.com/Bugs5382/go-workload-identity"
 	corev1 "github.com/Steward-GRC/steward-collab/gen/go/thirdparty/core/v1"
 	identityv1 "github.com/Steward-GRC/steward-collab/gen/go/thirdparty/identity/v1"
 	"github.com/Steward-GRC/steward-collab/internal/access"
@@ -37,7 +38,6 @@ import (
 	"github.com/Steward-GRC/steward-collab/internal/server"
 	"github.com/Steward-GRC/steward-collab/internal/snapshot"
 	"github.com/Steward-GRC/steward-collab/internal/store"
-	"github.com/Steward-GRC/steward-collab/internal/workloadauth"
 	"github.com/Steward-GRC/steward-collab/internal/ws"
 )
 
@@ -121,15 +121,15 @@ func run(ctx context.Context, logger log.Logger) error {
 	}
 	serveOpts := server.Options{Policy: grpcsvc.CallerPolicy, OnDeny: auditDenial(auditor, logger)}
 	if cfg.WorkloadAuth {
-		verifier, err := workloadauth.NewVerifier(cfg.Workload, logger)
+		verifier, err := workloadidentity.NewVerifier(cfg.Workload, logger)
 		if err != nil {
-			return fmt.Errorf("workloadauth: %w", err)
+			return fmt.Errorf("workload auth: %w", err)
 		}
 		go verifier.Run(ctx)
 		serveOpts.Verifier = verifier
 		deps.WorkloadKeys = verifier.Refresh
 	} else {
-		go workloadauth.WarnDisabled(ctx, logger, workloadauth.DisabledWarnInterval)
+		go workloadidentity.WarnDisabled(ctx, logger, workloadidentity.DisabledWarnInterval)
 		deps.WorkloadAuthDisabled = true
 	}
 	checker, err := readiness.New(deps, health.WithTTL(5*time.Second), health.WithTimeout(2*time.Second), health.WithLogger(logger))
@@ -255,10 +255,10 @@ func newHTTPServer(addr string, handler http.Handler) *http.Server {
 	}
 }
 
-// auditDenial audits every call workloadauth refuses. The request is never
+// auditDenial audits every call workload auth refuses. The request is never
 // recorded, only who called what and why it was refused.
-func auditDenial(auditor *audit.Emitter, logger log.Logger) workloadauth.DenyHook {
-	return func(ctx context.Context, d workloadauth.Denial) {
+func auditDenial(auditor *audit.Emitter, logger log.Logger) workloadidentity.DenyHook {
+	return func(ctx context.Context, d workloadidentity.Denial) {
 		if err := auditor.Emit(ctx, audit.Event{
 			Tier:    audit.TierAudit,
 			Action:  "collab.call.refused",

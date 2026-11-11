@@ -105,6 +105,7 @@ own service-account token (`WORKLOAD_TOKEN_FILE`) and the request's actor on eve
 
 Bump a ref, run `task proto` and commit `gen/` in the same change.
 
-`internal/workloadauth` is a copy of steward-core's and is never edited here.
-`scripts/workloadauth-check.sh` (run in CI) compares it byte for byte with core's at
-`STEWARD_CORE_REF` and fails on any difference, or when core has no copy at that commit.
+Service-to-service authentication, both verifying callers and sending collab's own token, comes
+from `github.com/Bugs5382/go-workload-identity`. Steward's audience (`steward`) and caller-name
+mapping (`steward-gateway` is the caller `gateway`) are supplied in `internal/config`
+(`config.StewardWorkload`). `STEWARD_CORE_REF` pins only the generated protos.
