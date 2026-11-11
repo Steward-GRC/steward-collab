@@ -106,8 +106,13 @@ type AuditEvent struct {
 	Attributes map[string]string `protobuf:"bytes,7,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Marks a record the law requires to be kept: it is never purged.
 	LegalBasisExempt bool `protobuf:"varint,8,opt,name=legal_basis_exempt,json=legalBasisExempt,proto3" json:"legal_basis_exempt,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// The number of the policy version the event is about, 1 or more; 0 when it
+	// is about no version. The consumer records it in the event's hashed
+	// attributes as "version_number", so the chain covers it, and any
+	// "version_number" attribute the publisher sent is replaced by it.
+	VersionNumber int32 `protobuf:"varint,9,opt,name=version_number,json=versionNumber,proto3" json:"version_number,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AuditEvent) Reset() {
@@ -194,6 +199,13 @@ func (x *AuditEvent) GetLegalBasisExempt() bool {
 		return x.LegalBasisExempt
 	}
 	return false
+}
+
+func (x *AuditEvent) GetVersionNumber() int32 {
+	if x != nil {
+		return x.VersionNumber
+	}
+	return 0
 }
 
 // RequesterIdentity is the caller the gateway authenticated. Every RPC needs
@@ -303,7 +315,10 @@ type AuditRecord struct {
 	// Set on a tombstone the retention purge left: action, actor, subject and
 	// group are empty, and only the link and hash remain. A verifier checks
 	// its link and trusts its hash, which the checkpoints still cover.
-	Purged        bool `protobuf:"varint,12,opt,name=purged,proto3" json:"purged,omitempty"`
+	Purged bool `protobuf:"varint,12,opt,name=purged,proto3" json:"purged,omitempty"`
+	// The number of the policy version the record is about; 0 when it is about
+	// no version.
+	VersionNumber int32 `protobuf:"varint,13,opt,name=version_number,json=versionNumber,proto3" json:"version_number,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -422,6 +437,13 @@ func (x *AuditRecord) GetPurged() bool {
 	return false
 }
 
+func (x *AuditRecord) GetVersionNumber() int32 {
+	if x != nil {
+		return x.VersionNumber
+	}
+	return 0
+}
+
 // Checkpoint is a Merkle root over a record range and its RFC 3161 token.
 type Checkpoint struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
@@ -536,8 +558,21 @@ type QueryAuditLogRequest struct {
 	// 1 to 200; anything else means 50.
 	PageSize int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// The next_page_token of the previous page.
-	PageToken     string             `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	Requester     *RequesterIdentity `protobuf:"bytes,7,opt,name=requester,proto3" json:"requester,omitempty"`
+	PageToken string             `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	Requester *RequesterIdentity `protobuf:"bytes,7,opt,name=requester,proto3" json:"requester,omitempty"`
+	// Only records about this policy version number; 0 means any.
+	VersionNumber int32 `protobuf:"varint,8,opt,name=version_number,json=versionNumber,proto3" json:"version_number,omitempty"`
+	// Only records whose action is one of these codes; empty means any.
+	Actions []string `protobuf:"bytes,9,rep,name=actions,proto3" json:"actions,omitempty"`
+	// Only records whose subject kind, the part before the colon ("policy" in
+	// "policy:POL-000001"), is this; empty means any. It combines with subject.
+	SubjectType string `protobuf:"bytes,10,opt,name=subject_type,json=subjectType,proto3" json:"subject_type,omitempty"`
+	// Only records made by one of these users. This is how an actor group is
+	// filtered: the caller resolves the group's members through steward-identity
+	// and sends their ids, because audit calls no other service. Unset means
+	// any actor; set but empty matches nothing, so a group with no members
+	// returns no records. It combines with actor_user_id.
+	ActorUsers    *UserIdSet `protobuf:"bytes,11,opt,name=actor_users,json=actorUsers,proto3" json:"actor_users,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -621,6 +656,79 @@ func (x *QueryAuditLogRequest) GetRequester() *RequesterIdentity {
 	return nil
 }
 
+func (x *QueryAuditLogRequest) GetVersionNumber() int32 {
+	if x != nil {
+		return x.VersionNumber
+	}
+	return 0
+}
+
+func (x *QueryAuditLogRequest) GetActions() []string {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
+}
+
+func (x *QueryAuditLogRequest) GetSubjectType() string {
+	if x != nil {
+		return x.SubjectType
+	}
+	return ""
+}
+
+func (x *QueryAuditLogRequest) GetActorUsers() *UserIdSet {
+	if x != nil {
+		return x.ActorUsers
+	}
+	return nil
+}
+
+// UserIdSet is a list of user ids whose being unset differs from being empty.
+type UserIdSet struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserIds       []string               `protobuf:"bytes,1,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserIdSet) Reset() {
+	*x = UserIdSet{}
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserIdSet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserIdSet) ProtoMessage() {}
+
+func (x *UserIdSet) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserIdSet.ProtoReflect.Descriptor instead.
+func (*UserIdSet) Descriptor() ([]byte, []int) {
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UserIdSet) GetUserIds() []string {
+	if x != nil {
+		return x.UserIds
+	}
+	return nil
+}
+
 type QueryAuditLogResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Records       []*AuditRecord         `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
@@ -631,7 +739,7 @@ type QueryAuditLogResponse struct {
 
 func (x *QueryAuditLogResponse) Reset() {
 	*x = QueryAuditLogResponse{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[5]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +751,7 @@ func (x *QueryAuditLogResponse) String() string {
 func (*QueryAuditLogResponse) ProtoMessage() {}
 
 func (x *QueryAuditLogResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[5]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +764,7 @@ func (x *QueryAuditLogResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryAuditLogResponse.ProtoReflect.Descriptor instead.
 func (*QueryAuditLogResponse) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{5}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *QueryAuditLogResponse) GetRecords() []*AuditRecord {
@@ -684,7 +792,7 @@ type ExportAuditSegmentRequest struct {
 
 func (x *ExportAuditSegmentRequest) Reset() {
 	*x = ExportAuditSegmentRequest{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[6]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -696,7 +804,7 @@ func (x *ExportAuditSegmentRequest) String() string {
 func (*ExportAuditSegmentRequest) ProtoMessage() {}
 
 func (x *ExportAuditSegmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[6]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -709,7 +817,7 @@ func (x *ExportAuditSegmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportAuditSegmentRequest.ProtoReflect.Descriptor instead.
 func (*ExportAuditSegmentRequest) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{6}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ExportAuditSegmentRequest) GetFromRecordId() int64 {
@@ -743,7 +851,7 @@ type ExportAuditSegmentResponse struct {
 
 func (x *ExportAuditSegmentResponse) Reset() {
 	*x = ExportAuditSegmentResponse{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[7]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -755,7 +863,7 @@ func (x *ExportAuditSegmentResponse) String() string {
 func (*ExportAuditSegmentResponse) ProtoMessage() {}
 
 func (x *ExportAuditSegmentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[7]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -768,7 +876,7 @@ func (x *ExportAuditSegmentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportAuditSegmentResponse.ProtoReflect.Descriptor instead.
 func (*ExportAuditSegmentResponse) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{7}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ExportAuditSegmentResponse) GetRecords() []*AuditRecord {
@@ -796,7 +904,7 @@ type VerifyAuditChainRequest struct {
 
 func (x *VerifyAuditChainRequest) Reset() {
 	*x = VerifyAuditChainRequest{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[8]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -808,7 +916,7 @@ func (x *VerifyAuditChainRequest) String() string {
 func (*VerifyAuditChainRequest) ProtoMessage() {}
 
 func (x *VerifyAuditChainRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[8]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -821,7 +929,7 @@ func (x *VerifyAuditChainRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyAuditChainRequest.ProtoReflect.Descriptor instead.
 func (*VerifyAuditChainRequest) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{8}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *VerifyAuditChainRequest) GetFromRecordId() int64 {
@@ -859,7 +967,7 @@ type VerifyAuditChainResponse struct {
 
 func (x *VerifyAuditChainResponse) Reset() {
 	*x = VerifyAuditChainResponse{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[9]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -871,7 +979,7 @@ func (x *VerifyAuditChainResponse) String() string {
 func (*VerifyAuditChainResponse) ProtoMessage() {}
 
 func (x *VerifyAuditChainResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[9]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -884,7 +992,7 @@ func (x *VerifyAuditChainResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyAuditChainResponse.ProtoReflect.Descriptor instead.
 func (*VerifyAuditChainResponse) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{9}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *VerifyAuditChainResponse) GetValid() bool {
@@ -939,7 +1047,7 @@ type ListRecentEventsRequest struct {
 
 func (x *ListRecentEventsRequest) Reset() {
 	*x = ListRecentEventsRequest{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[10]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -951,7 +1059,7 @@ func (x *ListRecentEventsRequest) String() string {
 func (*ListRecentEventsRequest) ProtoMessage() {}
 
 func (x *ListRecentEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[10]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -964,7 +1072,7 @@ func (x *ListRecentEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRecentEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListRecentEventsRequest) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{10}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListRecentEventsRequest) GetSinceTimestamp() *timestamppb.Timestamp {
@@ -1011,7 +1119,7 @@ type ListRecentEventsResponse struct {
 
 func (x *ListRecentEventsResponse) Reset() {
 	*x = ListRecentEventsResponse{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[11]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1023,7 +1131,7 @@ func (x *ListRecentEventsResponse) String() string {
 func (*ListRecentEventsResponse) ProtoMessage() {}
 
 func (x *ListRecentEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[11]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1036,12 +1144,102 @@ func (x *ListRecentEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRecentEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListRecentEventsResponse) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{11}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListRecentEventsResponse) GetRecords() []*AuditRecord {
 	if x != nil {
 		return x.Records
+	}
+	return nil
+}
+
+type ListAuditActionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Requester     *RequesterIdentity     `protobuf:"bytes,1,opt,name=requester,proto3" json:"requester,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAuditActionsRequest) Reset() {
+	*x = ListAuditActionsRequest{}
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAuditActionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAuditActionsRequest) ProtoMessage() {}
+
+func (x *ListAuditActionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAuditActionsRequest.ProtoReflect.Descriptor instead.
+func (*ListAuditActionsRequest) Descriptor() ([]byte, []int) {
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListAuditActionsRequest) GetRequester() *RequesterIdentity {
+	if x != nil {
+		return x.Requester
+	}
+	return nil
+}
+
+type ListAuditActionsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The distinct actions of the records still readable, sorted. Labels are the
+	// caller's: audit holds codes only.
+	Actions       []string `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAuditActionsResponse) Reset() {
+	*x = ListAuditActionsResponse{}
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAuditActionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAuditActionsResponse) ProtoMessage() {}
+
+func (x *ListAuditActionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAuditActionsResponse.ProtoReflect.Descriptor instead.
+func (*ListAuditActionsResponse) Descriptor() ([]byte, []int) {
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListAuditActionsResponse) GetActions() []string {
+	if x != nil {
+		return x.Actions
 	}
 	return nil
 }
@@ -1059,7 +1257,7 @@ type ShredSubjectRequest struct {
 
 func (x *ShredSubjectRequest) Reset() {
 	*x = ShredSubjectRequest{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[12]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1071,7 +1269,7 @@ func (x *ShredSubjectRequest) String() string {
 func (*ShredSubjectRequest) ProtoMessage() {}
 
 func (x *ShredSubjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[12]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1084,7 +1282,7 @@ func (x *ShredSubjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShredSubjectRequest.ProtoReflect.Descriptor instead.
 func (*ShredSubjectRequest) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{12}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ShredSubjectRequest) GetSubjectKey() string {
@@ -1120,7 +1318,7 @@ type ShredSubjectResponse struct {
 
 func (x *ShredSubjectResponse) Reset() {
 	*x = ShredSubjectResponse{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[13]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1132,7 +1330,7 @@ func (x *ShredSubjectResponse) String() string {
 func (*ShredSubjectResponse) ProtoMessage() {}
 
 func (x *ShredSubjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[13]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1145,7 +1343,7 @@ func (x *ShredSubjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShredSubjectResponse.ProtoReflect.Descriptor instead.
 func (*ShredSubjectResponse) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{13}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ShredSubjectResponse) GetRecordsTombstoned() int32 {
@@ -1181,7 +1379,7 @@ type LegalHold struct {
 
 func (x *LegalHold) Reset() {
 	*x = LegalHold{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[14]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1193,7 +1391,7 @@ func (x *LegalHold) String() string {
 func (*LegalHold) ProtoMessage() {}
 
 func (x *LegalHold) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[14]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1206,7 +1404,7 @@ func (x *LegalHold) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LegalHold.ProtoReflect.Descriptor instead.
 func (*LegalHold) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{14}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *LegalHold) GetHoldUuid() string {
@@ -1273,7 +1471,7 @@ type CreateLegalHoldRequest struct {
 
 func (x *CreateLegalHoldRequest) Reset() {
 	*x = CreateLegalHoldRequest{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[15]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1285,7 +1483,7 @@ func (x *CreateLegalHoldRequest) String() string {
 func (*CreateLegalHoldRequest) ProtoMessage() {}
 
 func (x *CreateLegalHoldRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[15]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1298,7 +1496,7 @@ func (x *CreateLegalHoldRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateLegalHoldRequest.ProtoReflect.Descriptor instead.
 func (*CreateLegalHoldRequest) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{15}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *CreateLegalHoldRequest) GetSubjectFilter() string {
@@ -1338,7 +1536,7 @@ type CreateLegalHoldResponse struct {
 
 func (x *CreateLegalHoldResponse) Reset() {
 	*x = CreateLegalHoldResponse{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[16]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1350,7 +1548,7 @@ func (x *CreateLegalHoldResponse) String() string {
 func (*CreateLegalHoldResponse) ProtoMessage() {}
 
 func (x *CreateLegalHoldResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[16]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1363,7 +1561,7 @@ func (x *CreateLegalHoldResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateLegalHoldResponse.ProtoReflect.Descriptor instead.
 func (*CreateLegalHoldResponse) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{16}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CreateLegalHoldResponse) GetHold() *LegalHold {
@@ -1384,7 +1582,7 @@ type ListLegalHoldsRequest struct {
 
 func (x *ListLegalHoldsRequest) Reset() {
 	*x = ListLegalHoldsRequest{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[17]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1396,7 +1594,7 @@ func (x *ListLegalHoldsRequest) String() string {
 func (*ListLegalHoldsRequest) ProtoMessage() {}
 
 func (x *ListLegalHoldsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[17]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1409,7 +1607,7 @@ func (x *ListLegalHoldsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLegalHoldsRequest.ProtoReflect.Descriptor instead.
 func (*ListLegalHoldsRequest) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{17}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ListLegalHoldsRequest) GetIncludeReleased() bool {
@@ -1436,7 +1634,7 @@ type ListLegalHoldsResponse struct {
 
 func (x *ListLegalHoldsResponse) Reset() {
 	*x = ListLegalHoldsResponse{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[18]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1448,7 +1646,7 @@ func (x *ListLegalHoldsResponse) String() string {
 func (*ListLegalHoldsResponse) ProtoMessage() {}
 
 func (x *ListLegalHoldsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[18]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1461,7 +1659,7 @@ func (x *ListLegalHoldsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLegalHoldsResponse.ProtoReflect.Descriptor instead.
 func (*ListLegalHoldsResponse) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{18}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListLegalHoldsResponse) GetHolds() []*LegalHold {
@@ -1481,7 +1679,7 @@ type ReleaseLegalHoldRequest struct {
 
 func (x *ReleaseLegalHoldRequest) Reset() {
 	*x = ReleaseLegalHoldRequest{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[19]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1493,7 +1691,7 @@ func (x *ReleaseLegalHoldRequest) String() string {
 func (*ReleaseLegalHoldRequest) ProtoMessage() {}
 
 func (x *ReleaseLegalHoldRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[19]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1506,7 +1704,7 @@ func (x *ReleaseLegalHoldRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseLegalHoldRequest.ProtoReflect.Descriptor instead.
 func (*ReleaseLegalHoldRequest) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{19}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ReleaseLegalHoldRequest) GetHoldUuid() string {
@@ -1532,7 +1730,7 @@ type ReleaseLegalHoldResponse struct {
 
 func (x *ReleaseLegalHoldResponse) Reset() {
 	*x = ReleaseLegalHoldResponse{}
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[20]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1544,7 +1742,7 @@ func (x *ReleaseLegalHoldResponse) String() string {
 func (*ReleaseLegalHoldResponse) ProtoMessage() {}
 
 func (x *ReleaseLegalHoldResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_audit_v1_audit_proto_msgTypes[20]
+	mi := &file_steward_audit_v1_audit_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1557,7 +1755,7 @@ func (x *ReleaseLegalHoldResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseLegalHoldResponse.ProtoReflect.Descriptor instead.
 func (*ReleaseLegalHoldResponse) Descriptor() ([]byte, []int) {
-	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{20}
+	return file_steward_audit_v1_audit_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ReleaseLegalHoldResponse) GetHold() *LegalHold {
@@ -1571,7 +1769,7 @@ var File_steward_audit_v1_audit_proto protoreflect.FileDescriptor
 
 const file_steward_audit_v1_audit_proto_rawDesc = "" +
 	"\n" +
-	"\x1csteward/audit/v1/audit.proto\x12\x10steward.audit.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa1\x03\n" +
+	"\x1csteward/audit/v1/audit.proto\x12\x10steward.audit.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc8\x03\n" +
 	"\n" +
 	"AuditEvent\x12*\n" +
 	"\x04tier\x18\x01 \x01(\x0e2\x16.steward.audit.v1.TierR\x04tier\x12\x16\n" +
@@ -1584,7 +1782,8 @@ const file_steward_audit_v1_audit_proto_rawDesc = "" +
 	"\n" +
 	"attributes\x18\a \x03(\v2,.steward.audit.v1.AuditEvent.AttributesEntryR\n" +
 	"attributes\x12,\n" +
-	"\x12legal_basis_exempt\x18\b \x01(\bR\x10legalBasisExempt\x1a=\n" +
+	"\x12legal_basis_exempt\x18\b \x01(\bR\x10legalBasisExempt\x12%\n" +
+	"\x0eversion_number\x18\t \x01(\x05R\rversionNumber\x1a=\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb0\x01\n" +
@@ -1593,7 +1792,7 @@ const file_steward_audit_v1_audit_proto_rawDesc = "" +
 	"\x05roles\x18\x02 \x03(\tR\x05roles\x12\x16\n" +
 	"\x06groups\x18\x03 \x03(\tR\x06groups\x12%\n" +
 	"\x0emanaged_groups\x18\x04 \x03(\tR\rmanagedGroups\x12-\n" +
-	"\x12managed_categories\x18\x05 \x03(\tR\x11managedCategories\"\x84\x03\n" +
+	"\x12managed_categories\x18\x05 \x03(\tR\x11managedCategories\"\xab\x03\n" +
 	"\vAuditRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
 	"\vrecord_uuid\x18\x02 \x01(\tR\n" +
@@ -1610,7 +1809,8 @@ const file_steward_audit_v1_audit_proto_rawDesc = "" +
 	" \x01(\tR\n" +
 	"recordHash\x12,\n" +
 	"\x12legal_basis_exempt\x18\v \x01(\bR\x10legalBasisExempt\x12\x16\n" +
-	"\x06purged\x18\f \x01(\bR\x06purged\"\xb8\x02\n" +
+	"\x06purged\x18\f \x01(\bR\x06purged\x12%\n" +
+	"\x0eversion_number\x18\r \x01(\x05R\rversionNumber\"\xb8\x02\n" +
 	"\n" +
 	"Checkpoint\x12'\n" +
 	"\x0fcheckpoint_uuid\x18\x01 \x01(\tR\x0echeckpointUuid\x12\x1f\n" +
@@ -1625,7 +1825,7 @@ const file_steward_audit_v1_audit_proto_rawDesc = "" +
 	"anchoredAt\x12$\n" +
 	"\x0efrom_record_id\x18\a \x01(\x03R\ffromRecordId\x12 \n" +
 	"\fto_record_id\x18\b \x01(\x03R\n" +
-	"toRecordId\"\x82\x02\n" +
+	"toRecordId\"\xa4\x03\n" +
 	"\x14QueryAuditLogRequest\x12\x12\n" +
 	"\x04tier\x18\x01 \x01(\tR\x04tier\x12\x19\n" +
 	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12\"\n" +
@@ -1634,7 +1834,15 @@ const file_steward_audit_v1_audit_proto_rawDesc = "" +
 	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x06 \x01(\tR\tpageToken\x12A\n" +
-	"\trequester\x18\a \x01(\v2#.steward.audit.v1.RequesterIdentityR\trequester\"x\n" +
+	"\trequester\x18\a \x01(\v2#.steward.audit.v1.RequesterIdentityR\trequester\x12%\n" +
+	"\x0eversion_number\x18\b \x01(\x05R\rversionNumber\x12\x18\n" +
+	"\aactions\x18\t \x03(\tR\aactions\x12!\n" +
+	"\fsubject_type\x18\n" +
+	" \x01(\tR\vsubjectType\x12<\n" +
+	"\vactor_users\x18\v \x01(\v2\x1b.steward.audit.v1.UserIdSetR\n" +
+	"actorUsers\"&\n" +
+	"\tUserIdSet\x12\x19\n" +
+	"\buser_ids\x18\x01 \x03(\tR\auserIds\"x\n" +
 	"\x15QueryAuditLogResponse\x127\n" +
 	"\arecords\x18\x01 \x03(\v2\x1d.steward.audit.v1.AuditRecordR\arecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa6\x01\n" +
@@ -1664,7 +1872,11 @@ const file_steward_audit_v1_audit_proto_rawDesc = "" +
 	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12A\n" +
 	"\trequester\x18\x05 \x01(\v2#.steward.audit.v1.RequesterIdentityR\trequester\"S\n" +
 	"\x18ListRecentEventsResponse\x127\n" +
-	"\arecords\x18\x01 \x03(\v2\x1d.steward.audit.v1.AuditRecordR\arecords\"\x91\x01\n" +
+	"\arecords\x18\x01 \x03(\v2\x1d.steward.audit.v1.AuditRecordR\arecords\"\\\n" +
+	"\x17ListAuditActionsRequest\x12A\n" +
+	"\trequester\x18\x01 \x01(\v2#.steward.audit.v1.RequesterIdentityR\trequester\"4\n" +
+	"\x18ListAuditActionsResponse\x12\x18\n" +
+	"\aactions\x18\x01 \x03(\tR\aactions\"\x91\x01\n" +
 	"\x13ShredSubjectRequest\x12\x1f\n" +
 	"\vsubject_key\x18\x01 \x01(\tR\n" +
 	"subjectKey\x12\x16\n" +
@@ -1704,12 +1916,13 @@ const file_steward_audit_v1_audit_proto_rawDesc = "" +
 	"\x10TIER_UNSPECIFIED\x10\x00\x12\x0e\n" +
 	"\n" +
 	"TIER_AUDIT\x10\x01\x12\x11\n" +
-	"\rTIER_ACTIVITY\x10\x022\xce\x06\n" +
+	"\rTIER_ACTIVITY\x10\x022\xb9\a\n" +
 	"\fAuditService\x12`\n" +
 	"\rQueryAuditLog\x12&.steward.audit.v1.QueryAuditLogRequest\x1a'.steward.audit.v1.QueryAuditLogResponse\x12o\n" +
 	"\x12ExportAuditSegment\x12+.steward.audit.v1.ExportAuditSegmentRequest\x1a,.steward.audit.v1.ExportAuditSegmentResponse\x12i\n" +
 	"\x10VerifyAuditChain\x12).steward.audit.v1.VerifyAuditChainRequest\x1a*.steward.audit.v1.VerifyAuditChainResponse\x12i\n" +
-	"\x10ListRecentEvents\x12).steward.audit.v1.ListRecentEventsRequest\x1a*.steward.audit.v1.ListRecentEventsResponse\x12]\n" +
+	"\x10ListRecentEvents\x12).steward.audit.v1.ListRecentEventsRequest\x1a*.steward.audit.v1.ListRecentEventsResponse\x12i\n" +
+	"\x10ListAuditActions\x12).steward.audit.v1.ListAuditActionsRequest\x1a*.steward.audit.v1.ListAuditActionsResponse\x12]\n" +
 	"\fShredSubject\x12%.steward.audit.v1.ShredSubjectRequest\x1a&.steward.audit.v1.ShredSubjectResponse\x12f\n" +
 	"\x0fCreateLegalHold\x12(.steward.audit.v1.CreateLegalHoldRequest\x1a).steward.audit.v1.CreateLegalHoldResponse\x12c\n" +
 	"\x0eListLegalHolds\x12'.steward.audit.v1.ListLegalHoldsRequest\x1a(.steward.audit.v1.ListLegalHoldsResponse\x12i\n" +
@@ -1728,7 +1941,7 @@ func file_steward_audit_v1_audit_proto_rawDescGZIP() []byte {
 }
 
 var file_steward_audit_v1_audit_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_steward_audit_v1_audit_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_steward_audit_v1_audit_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_steward_audit_v1_audit_proto_goTypes = []any{
 	(Tier)(0),                          // 0: steward.audit.v1.Tier
 	(*AuditEvent)(nil),                 // 1: steward.audit.v1.AuditEvent
@@ -1736,70 +1949,77 @@ var file_steward_audit_v1_audit_proto_goTypes = []any{
 	(*AuditRecord)(nil),                // 3: steward.audit.v1.AuditRecord
 	(*Checkpoint)(nil),                 // 4: steward.audit.v1.Checkpoint
 	(*QueryAuditLogRequest)(nil),       // 5: steward.audit.v1.QueryAuditLogRequest
-	(*QueryAuditLogResponse)(nil),      // 6: steward.audit.v1.QueryAuditLogResponse
-	(*ExportAuditSegmentRequest)(nil),  // 7: steward.audit.v1.ExportAuditSegmentRequest
-	(*ExportAuditSegmentResponse)(nil), // 8: steward.audit.v1.ExportAuditSegmentResponse
-	(*VerifyAuditChainRequest)(nil),    // 9: steward.audit.v1.VerifyAuditChainRequest
-	(*VerifyAuditChainResponse)(nil),   // 10: steward.audit.v1.VerifyAuditChainResponse
-	(*ListRecentEventsRequest)(nil),    // 11: steward.audit.v1.ListRecentEventsRequest
-	(*ListRecentEventsResponse)(nil),   // 12: steward.audit.v1.ListRecentEventsResponse
-	(*ShredSubjectRequest)(nil),        // 13: steward.audit.v1.ShredSubjectRequest
-	(*ShredSubjectResponse)(nil),       // 14: steward.audit.v1.ShredSubjectResponse
-	(*LegalHold)(nil),                  // 15: steward.audit.v1.LegalHold
-	(*CreateLegalHoldRequest)(nil),     // 16: steward.audit.v1.CreateLegalHoldRequest
-	(*CreateLegalHoldResponse)(nil),    // 17: steward.audit.v1.CreateLegalHoldResponse
-	(*ListLegalHoldsRequest)(nil),      // 18: steward.audit.v1.ListLegalHoldsRequest
-	(*ListLegalHoldsResponse)(nil),     // 19: steward.audit.v1.ListLegalHoldsResponse
-	(*ReleaseLegalHoldRequest)(nil),    // 20: steward.audit.v1.ReleaseLegalHoldRequest
-	(*ReleaseLegalHoldResponse)(nil),   // 21: steward.audit.v1.ReleaseLegalHoldResponse
-	nil,                                // 22: steward.audit.v1.AuditEvent.AttributesEntry
-	(*timestamppb.Timestamp)(nil),      // 23: google.protobuf.Timestamp
+	(*UserIdSet)(nil),                  // 6: steward.audit.v1.UserIdSet
+	(*QueryAuditLogResponse)(nil),      // 7: steward.audit.v1.QueryAuditLogResponse
+	(*ExportAuditSegmentRequest)(nil),  // 8: steward.audit.v1.ExportAuditSegmentRequest
+	(*ExportAuditSegmentResponse)(nil), // 9: steward.audit.v1.ExportAuditSegmentResponse
+	(*VerifyAuditChainRequest)(nil),    // 10: steward.audit.v1.VerifyAuditChainRequest
+	(*VerifyAuditChainResponse)(nil),   // 11: steward.audit.v1.VerifyAuditChainResponse
+	(*ListRecentEventsRequest)(nil),    // 12: steward.audit.v1.ListRecentEventsRequest
+	(*ListRecentEventsResponse)(nil),   // 13: steward.audit.v1.ListRecentEventsResponse
+	(*ListAuditActionsRequest)(nil),    // 14: steward.audit.v1.ListAuditActionsRequest
+	(*ListAuditActionsResponse)(nil),   // 15: steward.audit.v1.ListAuditActionsResponse
+	(*ShredSubjectRequest)(nil),        // 16: steward.audit.v1.ShredSubjectRequest
+	(*ShredSubjectResponse)(nil),       // 17: steward.audit.v1.ShredSubjectResponse
+	(*LegalHold)(nil),                  // 18: steward.audit.v1.LegalHold
+	(*CreateLegalHoldRequest)(nil),     // 19: steward.audit.v1.CreateLegalHoldRequest
+	(*CreateLegalHoldResponse)(nil),    // 20: steward.audit.v1.CreateLegalHoldResponse
+	(*ListLegalHoldsRequest)(nil),      // 21: steward.audit.v1.ListLegalHoldsRequest
+	(*ListLegalHoldsResponse)(nil),     // 22: steward.audit.v1.ListLegalHoldsResponse
+	(*ReleaseLegalHoldRequest)(nil),    // 23: steward.audit.v1.ReleaseLegalHoldRequest
+	(*ReleaseLegalHoldResponse)(nil),   // 24: steward.audit.v1.ReleaseLegalHoldResponse
+	nil,                                // 25: steward.audit.v1.AuditEvent.AttributesEntry
+	(*timestamppb.Timestamp)(nil),      // 26: google.protobuf.Timestamp
 }
 var file_steward_audit_v1_audit_proto_depIdxs = []int32{
 	0,  // 0: steward.audit.v1.AuditEvent.tier:type_name -> steward.audit.v1.Tier
-	23, // 1: steward.audit.v1.AuditEvent.occurred_at:type_name -> google.protobuf.Timestamp
-	22, // 2: steward.audit.v1.AuditEvent.attributes:type_name -> steward.audit.v1.AuditEvent.AttributesEntry
-	23, // 3: steward.audit.v1.AuditRecord.occurred_at:type_name -> google.protobuf.Timestamp
-	23, // 4: steward.audit.v1.Checkpoint.anchored_at:type_name -> google.protobuf.Timestamp
+	26, // 1: steward.audit.v1.AuditEvent.occurred_at:type_name -> google.protobuf.Timestamp
+	25, // 2: steward.audit.v1.AuditEvent.attributes:type_name -> steward.audit.v1.AuditEvent.AttributesEntry
+	26, // 3: steward.audit.v1.AuditRecord.occurred_at:type_name -> google.protobuf.Timestamp
+	26, // 4: steward.audit.v1.Checkpoint.anchored_at:type_name -> google.protobuf.Timestamp
 	2,  // 5: steward.audit.v1.QueryAuditLogRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
-	3,  // 6: steward.audit.v1.QueryAuditLogResponse.records:type_name -> steward.audit.v1.AuditRecord
-	2,  // 7: steward.audit.v1.ExportAuditSegmentRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
-	3,  // 8: steward.audit.v1.ExportAuditSegmentResponse.records:type_name -> steward.audit.v1.AuditRecord
-	4,  // 9: steward.audit.v1.ExportAuditSegmentResponse.checkpoints:type_name -> steward.audit.v1.Checkpoint
-	2,  // 10: steward.audit.v1.VerifyAuditChainRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
-	23, // 11: steward.audit.v1.ListRecentEventsRequest.since_timestamp:type_name -> google.protobuf.Timestamp
-	2,  // 12: steward.audit.v1.ListRecentEventsRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
-	3,  // 13: steward.audit.v1.ListRecentEventsResponse.records:type_name -> steward.audit.v1.AuditRecord
-	2,  // 14: steward.audit.v1.ShredSubjectRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
-	23, // 15: steward.audit.v1.LegalHold.created_at:type_name -> google.protobuf.Timestamp
-	23, // 16: steward.audit.v1.LegalHold.released_at:type_name -> google.protobuf.Timestamp
-	2,  // 17: steward.audit.v1.CreateLegalHoldRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
-	15, // 18: steward.audit.v1.CreateLegalHoldResponse.hold:type_name -> steward.audit.v1.LegalHold
-	2,  // 19: steward.audit.v1.ListLegalHoldsRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
-	15, // 20: steward.audit.v1.ListLegalHoldsResponse.holds:type_name -> steward.audit.v1.LegalHold
-	2,  // 21: steward.audit.v1.ReleaseLegalHoldRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
-	15, // 22: steward.audit.v1.ReleaseLegalHoldResponse.hold:type_name -> steward.audit.v1.LegalHold
-	5,  // 23: steward.audit.v1.AuditService.QueryAuditLog:input_type -> steward.audit.v1.QueryAuditLogRequest
-	7,  // 24: steward.audit.v1.AuditService.ExportAuditSegment:input_type -> steward.audit.v1.ExportAuditSegmentRequest
-	9,  // 25: steward.audit.v1.AuditService.VerifyAuditChain:input_type -> steward.audit.v1.VerifyAuditChainRequest
-	11, // 26: steward.audit.v1.AuditService.ListRecentEvents:input_type -> steward.audit.v1.ListRecentEventsRequest
-	13, // 27: steward.audit.v1.AuditService.ShredSubject:input_type -> steward.audit.v1.ShredSubjectRequest
-	16, // 28: steward.audit.v1.AuditService.CreateLegalHold:input_type -> steward.audit.v1.CreateLegalHoldRequest
-	18, // 29: steward.audit.v1.AuditService.ListLegalHolds:input_type -> steward.audit.v1.ListLegalHoldsRequest
-	20, // 30: steward.audit.v1.AuditService.ReleaseLegalHold:input_type -> steward.audit.v1.ReleaseLegalHoldRequest
-	6,  // 31: steward.audit.v1.AuditService.QueryAuditLog:output_type -> steward.audit.v1.QueryAuditLogResponse
-	8,  // 32: steward.audit.v1.AuditService.ExportAuditSegment:output_type -> steward.audit.v1.ExportAuditSegmentResponse
-	10, // 33: steward.audit.v1.AuditService.VerifyAuditChain:output_type -> steward.audit.v1.VerifyAuditChainResponse
-	12, // 34: steward.audit.v1.AuditService.ListRecentEvents:output_type -> steward.audit.v1.ListRecentEventsResponse
-	14, // 35: steward.audit.v1.AuditService.ShredSubject:output_type -> steward.audit.v1.ShredSubjectResponse
-	17, // 36: steward.audit.v1.AuditService.CreateLegalHold:output_type -> steward.audit.v1.CreateLegalHoldResponse
-	19, // 37: steward.audit.v1.AuditService.ListLegalHolds:output_type -> steward.audit.v1.ListLegalHoldsResponse
-	21, // 38: steward.audit.v1.AuditService.ReleaseLegalHold:output_type -> steward.audit.v1.ReleaseLegalHoldResponse
-	31, // [31:39] is the sub-list for method output_type
-	23, // [23:31] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	6,  // 6: steward.audit.v1.QueryAuditLogRequest.actor_users:type_name -> steward.audit.v1.UserIdSet
+	3,  // 7: steward.audit.v1.QueryAuditLogResponse.records:type_name -> steward.audit.v1.AuditRecord
+	2,  // 8: steward.audit.v1.ExportAuditSegmentRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
+	3,  // 9: steward.audit.v1.ExportAuditSegmentResponse.records:type_name -> steward.audit.v1.AuditRecord
+	4,  // 10: steward.audit.v1.ExportAuditSegmentResponse.checkpoints:type_name -> steward.audit.v1.Checkpoint
+	2,  // 11: steward.audit.v1.VerifyAuditChainRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
+	26, // 12: steward.audit.v1.ListRecentEventsRequest.since_timestamp:type_name -> google.protobuf.Timestamp
+	2,  // 13: steward.audit.v1.ListRecentEventsRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
+	3,  // 14: steward.audit.v1.ListRecentEventsResponse.records:type_name -> steward.audit.v1.AuditRecord
+	2,  // 15: steward.audit.v1.ListAuditActionsRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
+	2,  // 16: steward.audit.v1.ShredSubjectRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
+	26, // 17: steward.audit.v1.LegalHold.created_at:type_name -> google.protobuf.Timestamp
+	26, // 18: steward.audit.v1.LegalHold.released_at:type_name -> google.protobuf.Timestamp
+	2,  // 19: steward.audit.v1.CreateLegalHoldRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
+	18, // 20: steward.audit.v1.CreateLegalHoldResponse.hold:type_name -> steward.audit.v1.LegalHold
+	2,  // 21: steward.audit.v1.ListLegalHoldsRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
+	18, // 22: steward.audit.v1.ListLegalHoldsResponse.holds:type_name -> steward.audit.v1.LegalHold
+	2,  // 23: steward.audit.v1.ReleaseLegalHoldRequest.requester:type_name -> steward.audit.v1.RequesterIdentity
+	18, // 24: steward.audit.v1.ReleaseLegalHoldResponse.hold:type_name -> steward.audit.v1.LegalHold
+	5,  // 25: steward.audit.v1.AuditService.QueryAuditLog:input_type -> steward.audit.v1.QueryAuditLogRequest
+	8,  // 26: steward.audit.v1.AuditService.ExportAuditSegment:input_type -> steward.audit.v1.ExportAuditSegmentRequest
+	10, // 27: steward.audit.v1.AuditService.VerifyAuditChain:input_type -> steward.audit.v1.VerifyAuditChainRequest
+	12, // 28: steward.audit.v1.AuditService.ListRecentEvents:input_type -> steward.audit.v1.ListRecentEventsRequest
+	14, // 29: steward.audit.v1.AuditService.ListAuditActions:input_type -> steward.audit.v1.ListAuditActionsRequest
+	16, // 30: steward.audit.v1.AuditService.ShredSubject:input_type -> steward.audit.v1.ShredSubjectRequest
+	19, // 31: steward.audit.v1.AuditService.CreateLegalHold:input_type -> steward.audit.v1.CreateLegalHoldRequest
+	21, // 32: steward.audit.v1.AuditService.ListLegalHolds:input_type -> steward.audit.v1.ListLegalHoldsRequest
+	23, // 33: steward.audit.v1.AuditService.ReleaseLegalHold:input_type -> steward.audit.v1.ReleaseLegalHoldRequest
+	7,  // 34: steward.audit.v1.AuditService.QueryAuditLog:output_type -> steward.audit.v1.QueryAuditLogResponse
+	9,  // 35: steward.audit.v1.AuditService.ExportAuditSegment:output_type -> steward.audit.v1.ExportAuditSegmentResponse
+	11, // 36: steward.audit.v1.AuditService.VerifyAuditChain:output_type -> steward.audit.v1.VerifyAuditChainResponse
+	13, // 37: steward.audit.v1.AuditService.ListRecentEvents:output_type -> steward.audit.v1.ListRecentEventsResponse
+	15, // 38: steward.audit.v1.AuditService.ListAuditActions:output_type -> steward.audit.v1.ListAuditActionsResponse
+	17, // 39: steward.audit.v1.AuditService.ShredSubject:output_type -> steward.audit.v1.ShredSubjectResponse
+	20, // 40: steward.audit.v1.AuditService.CreateLegalHold:output_type -> steward.audit.v1.CreateLegalHoldResponse
+	22, // 41: steward.audit.v1.AuditService.ListLegalHolds:output_type -> steward.audit.v1.ListLegalHoldsResponse
+	24, // 42: steward.audit.v1.AuditService.ReleaseLegalHold:output_type -> steward.audit.v1.ReleaseLegalHoldResponse
+	34, // [34:43] is the sub-list for method output_type
+	25, // [25:34] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_steward_audit_v1_audit_proto_init() }
@@ -1813,7 +2033,7 @@ func file_steward_audit_v1_audit_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_steward_audit_v1_audit_proto_rawDesc), len(file_steward_audit_v1_audit_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   22,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
