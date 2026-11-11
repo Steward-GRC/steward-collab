@@ -136,9 +136,8 @@ const (
 // editors instead.
 func (p *Publisher) SnapshotJSON(ctx context.Context, cp Checkpoint) Outcome {
 	actor := p.actorFor(cp)
-	if err := ValidateLexicalJSON(cp.ContentJSON); err != nil {
-		p.logger.Warn("snapshot pre-check rejected content", log.F("error", err.Error()), log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID))
-		return p.rejected(ctx, cp, actor, ReasonPreCheckFailed, err.Error())
+	if out, ok := p.PreCheck(ctx, cp); !ok {
+		return out
 	}
 
 	accepted, reason, err := p.client.UpdateDraftContent(ctx, SnapshotRequest{
@@ -162,6 +161,19 @@ func (p *Publisher) SnapshotJSON(ctx context.Context, cp Checkpoint) Outcome {
 	p.logger.Debug("snapshot accepted", log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID))
 	p.emit(ctx, cp, actor, "collab.snapshot.accepted", nil)
 	return Outcome{Accepted: true}
+}
+
+// PreCheck runs the cheap structural check on the checkpoint's JSON without
+// calling core. ok is false when it failed: the refusal is audited as
+// collab.snapshot.rejected and returned as the Outcome. The room calls it when
+// a checkpoint arrives so a bad one is refused at once and never held for the
+// debounce; SnapshotJSON runs it again, which costs nothing.
+func (p *Publisher) PreCheck(ctx context.Context, cp Checkpoint) (Outcome, bool) {
+	if err := ValidateLexicalJSON(cp.ContentJSON); err != nil {
+		p.logger.Warn("snapshot pre-check rejected content", log.F("error", err.Error()), log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID))
+		return p.rejected(ctx, cp, p.actorFor(cp), ReasonPreCheckFailed, err.Error()), false
+	}
+	return Outcome{Accepted: true}, true
 }
 
 // actorFor falls back to SystemActorID for an absent or non-UUID actor: core

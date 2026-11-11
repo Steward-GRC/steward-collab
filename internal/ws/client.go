@@ -193,6 +193,18 @@ func (c *Client) handleMessage(ctx context.Context, msg []byte) {
 			c.logger.Warn("decode snapshot message", log.F("error", err.Error()), log.F("user_id", c.userID))
 			return
 		}
+		// A checkpoint the room will not keep is answered to this sender at
+		// once, as the mock does, and changes nothing.
+		if refusal := c.room.refuseCheckpoint(ctx, contentJSON, c.userID, c.impersonator); refusal != nil {
+			frame, err := EncodeControl(*refusal)
+			if err != nil {
+				c.logger.Error(err, "encode control frame", log.F("draft_id", c.room.draftID), log.F("user_id", c.userID))
+				return
+			}
+			c.queueControl(frame)
+			return
+		}
+		log.Trace(c.logger, "checkpoint received", log.F("draft_id", c.room.draftID), log.F("user_id", c.userID), log.F("content_bytes", len(contentJSON)), log.F("state_bytes", len(yjsState)))
 		c.room.recordSnapshot(ctx, contentJSON, yjsState, c.userID, c.impersonator)
 	case MsgQueryAwareness:
 		// A stock y-websocket client sends this on connect. Left unanswered, a

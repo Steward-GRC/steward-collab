@@ -8,18 +8,24 @@ name: License Check (Go)
 # replace the old two-job job-license-check.yaml, whose off-ecosystem job billed
 # a minute per run to do nothing.
 #
-# Pull requests only, and not while the PR is a draft; the PR run covers what
+# Limited CI mode (org variable CI_MODE=limited, issue #47): skipped on PRs, run nightly
+# and on release/** pushes. Pull requests only otherwise, and not while the PR is a draft; the PR run covers what
 # merges, so nothing reruns on push to main.
 on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: ['release/**']
+  schedule:
+    - cron: '47 6 * * *'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   go:
     name: ⚖️ Dependency licenses (Go)
-    if: github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || (github.event.pull_request.draft == false && vars.CI_MODE != 'limited')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

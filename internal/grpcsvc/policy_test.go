@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	workloadidentity "github.com/Bugs5382/go-workload-identity"
 	collabv1 "github.com/Steward-GRC/steward-collab/gen/go/steward/collab/v1"
 	"github.com/Steward-GRC/steward-collab/internal/grpcsvc"
-	"github.com/Steward-GRC/steward-collab/internal/workloadauth"
 )
 
 // Only the gateway calls collab, and always for a signed-in user, so it may
@@ -26,7 +26,7 @@ func TestCallerPolicyPerMethod(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			acc, ok := grpcsvc.CallerPolicy.Lookup(method, grpcsvc.CallerGateway)
 			require.True(t, ok, "the gateway calls %s", name)
-			require.Equal(t, workloadauth.OnBehalf, acc)
+			require.Equal(t, workloadidentity.OnBehalf, acc)
 			require.Len(t, grpcsvc.CallerPolicy[method], 1, "only the gateway is listed")
 			for _, other := range []string{"core", "workflow", "ai", "steward-gateway"} {
 				_, ok := grpcsvc.CallerPolicy.Lookup(method, other)

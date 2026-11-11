@@ -54,6 +54,27 @@ and length-prefixed fields:
 | `100` snapshot | client to server | the Lexical EditorState JSON, then the client's compacted Yjs state (either may be empty). The JSON goes to core on a 5 second debounce, when the last editor leaves and on `FlushDraft`; the Yjs state is stored as is so a room survives a restart. |
 | `101` control | server to client | JSON: `{"type", "draft_id", "reason", "detail", "version_number"}`. Types: `snapshot.accepted`, `snapshot.rejected` (reason `pre_check_failed`, `grpc_error` or `server_rejected`, with core's detail), `draft.published` (the room is read-only now). |
 
+A checkpoint the room will not keep is answered to the sender alone, at once, and changes nothing
+(nothing is held for the debounce, stored or sent to core): `snapshot.rejected` with reason
+`pre_check_failed` when the content JSON is not a JSON object with a `root` object, and
+`server_rejected` when the draft is published. An empty content JSON is not refused: a checkpoint
+may carry only the Yjs state.
+
+### Where collab differs from the mock server on purpose
+
+The mock server (steward-mock-server, `src/product/collab.ts`) models this relay for the web
+editor. These differences are kept; each has a reason.
+
+| Mock | Collab | Why |
+| --- | --- | --- |
+| `snapshot.accepted` at once. | Sent after core answers: up to 5 seconds of debounce, then the call. | The editor reads `accepted` as "core holds this" (web `protocol.ts`). An early ack would say so before core agreed, and `snapshot.rejected` from core would arrive after the editor had been told it was safe. |
+| The ack and the refusal go to the sender. | Core's answer goes to every editor in the room. | The debounce merges checkpoints from several editors into one call, so one answer covers them all, and everyone should hear that the content is not durable. Only the immediate refusals above are for the sender alone. |
+| Rejects a checkpoint for a version that is not editable. | Core decides, so the refusal arrives after the debounce as `grpc_error` with core's detail. A published draft is refused at once. | Collab holds no draft status; core owns it. |
+| Rejects a checkpoint core refuses and keeps nothing. | Core's refusal still stores the checkpoint's Yjs state. | The editors' documents already hold those edits; the room has to start the next session from what they hold. The refusal is reported on the control channel. A checkpoint refused by the pre-check, or on a published draft, keeps nothing. |
+| A checkpoint with empty content is a malformed JSON refusal. | It is accepted as a Yjs-only checkpoint: the state is stored, nothing goes to core and no control frame comes back. | The frame allows either part to be empty. |
+| Keeps every sync update in the room and replays them to a joiner's sync step 1. | Keeps no document. Sync step 1 is answered with the last checkpoint's Yjs state, and a joiner makes the editors already in the room send their full document, which reaches the joiner as a sync step 2. | Collab runs no Y.Doc, so it cannot merge updates. Edits made since the last checkpoint live in the editors' own documents, and are lost only if the last editor leaves before a checkpoint arrives. The mock keeps them only until its room empties, too. |
+| A document update goes to the other editors only. | A document update is fanned out to every editor in the room, the sender included. | Applying an update twice is harmless in Yjs. |
+
 Presence is bound to the token: every awareness state's `user` is replaced with
 `{"uid", "name", "color", "colorIndex"}`. `colorIndex` (0 to 7) is the position in the design's
 collaborator palette, so the web picks its theme's colour; `color` is the light-theme value.
@@ -84,6 +105,7 @@ own service-account token (`WORKLOAD_TOKEN_FILE`) and the request's actor on eve
 
 Bump a ref, run `task proto` and commit `gen/` in the same change.
 
-`internal/workloadauth` is a copy of steward-core's and is never edited here.
-`scripts/workloadauth-check.sh` (run in CI) compares it byte for byte with core's at
-`STEWARD_CORE_REF` and fails on any difference, or when core has no copy at that commit.
+Service-to-service authentication, both verifying callers and sending collab's own token, comes
+from `github.com/Bugs5382/go-workload-identity`. Steward's audience (`steward`) and caller-name
+mapping (`steward-gateway` is the caller `gateway`) are supplied in `internal/config`
+(`config.StewardWorkload`). `STEWARD_CORE_REF` pins only the generated protos.
