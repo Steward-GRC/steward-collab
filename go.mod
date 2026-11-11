@@ -1,6 +1,6 @@
 module github.com/Steward-GRC/steward-collab
 
-go 1.26.10
+go 1.26.11
 
 require (
 	github.com/Bugs5382/go-apperr v1.2.1
