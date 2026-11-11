@@ -31,7 +31,8 @@ type Config struct {
 	RabbitURL     string
 	GRPCPort      string
 	// HTTPPort serves the websocket upgrades, /livez and /readyz.
-	HTTPPort     string
+	HTTPPort string
+	// OTLPEndpoint is the OpenTelemetry collector; empty turns tracing off.
 	OTLPEndpoint string
 	CoreAddr     string
 	IdentityAddr string
@@ -68,7 +69,7 @@ func Load(getenv func(string) string) (Config, error) {
 		RabbitURL:      getenv("RABBITMQ_URL"),
 		GRPCPort:       or("GRPC_PORT", "9090"),
 		HTTPPort:       or("HTTP_PORT", "8081"),
-		OTLPEndpoint:   or("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4317"),
+		OTLPEndpoint:   getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
 		CoreAddr:       or("CORE_GRPC_ADDR", "core:9090"),
 		IdentityAddr:   or("IDENTITY_GRPC_ADDR", "identity:9090"),
 		TokenSecret:    []byte(getenv("COLLAB_TOKEN_SECRET")),

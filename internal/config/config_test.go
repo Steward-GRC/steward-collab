@@ -142,3 +142,25 @@ func TestLoadTokenFile(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "/run/token", c.TokenFile)
 }
+
+func TestLoadOTLPEndpoint(t *testing.T) {
+	for name, tc := range map[string]struct{ set, want string }{
+		"unset": {"", ""},
+		"empty": {"-", ""},
+		"set":   {"otel.example.org:4317", "otel.example.org:4317"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			m := required()
+			switch tc.set {
+			case "":
+			case "-":
+				m["OTEL_EXPORTER_OTLP_ENDPOINT"] = ""
+			default:
+				m["OTEL_EXPORTER_OTLP_ENDPOINT"] = tc.set
+			}
+			c, err := Load(env(m))
+			require.NoError(t, err)
+			require.Equal(t, tc.want, c.OTLPEndpoint, "unset or empty turns tracing off")
+		})
+	}
+}
