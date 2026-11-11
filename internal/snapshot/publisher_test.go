@@ -450,6 +450,33 @@ func TestPublisher_EmitsRejectedAuditOnPreCheckFail(t *testing.T) {
 	}
 }
 
+// TestPublisher_PreCheckRefusesAndAuditsOnce: the room pre-checks a checkpoint
+// when it arrives. A bad one is audited once, and no call goes to core; a good
+// one is not audited at all (the audit row comes with core's answer).
+func TestPublisher_PreCheckRefusesAndAuditsOnce(t *testing.T) {
+	fake := &fakePolicyClient{}
+	em, fap := newTestEmitter()
+	p := snapshot.NewPublisherWithClient(fake, em, log.Nop())
+
+	out, ok := p.PreCheck(context.Background(), snapshot.Checkpoint{DraftID: "draft-11", PolicyID: "policy-11", ContentJSON: "nope"})
+	if ok || out.Accepted || out.Reason != snapshot.ReasonPreCheckFailed || out.Detail == "" {
+		t.Fatalf("bad content: got %+v ok=%v want pre_check_failed", out, ok)
+	}
+	if n := len(fap.snapshot()); n != 1 {
+		t.Fatalf("audit events after a refusal: got %d want 1", n)
+	}
+
+	if _, ok := p.PreCheck(context.Background(), snapshot.Checkpoint{DraftID: "draft-11", ContentJSON: `{"root":{}}`}); !ok {
+		t.Fatal("valid content was refused")
+	}
+	if n := len(fap.snapshot()); n != 1 {
+		t.Fatalf("a passing pre-check was audited: %d events", n)
+	}
+	if fake.callCount != 0 {
+		t.Fatalf("PreCheck called core %d time(s)", fake.callCount)
+	}
+}
+
 // logCapture is a minimal zerolog sink for testing.
 type logCapture struct{ lines []string }
 

@@ -210,6 +210,51 @@ func (r *Room) RecordSnapshot(ctx context.Context, contentJSON string, yjsState 
 	r.recordSnapshot(ctx, contentJSON, yjsState, actorUserID, "")
 }
 
+// refuseCheckpoint decides, when a checkpoint frame arrives, whether the room
+// will not keep it, and says why as a control message for the sender alone. It
+// returns nil when the checkpoint may be recorded. A refused checkpoint changes
+// nothing: it is not held for the debounce, its Yjs state is not adopted or
+// stored, and core never sees it.
+//
+//   - A published draft is no longer an editable draft (server_rejected).
+//   - Content that fails the structural pre-check is refused at once
+//     (pre_check_failed) rather than after the debounce. An empty content JSON
+//     is allowed: a checkpoint may carry only the Yjs state.
+func (r *Room) refuseCheckpoint(ctx context.Context, contentJSON, actorUserID, impersonator string) *ControlMessage {
+	if r.isPublished() {
+		r.logger.Debug("checkpoint refused: draft is published", log.F("draft_id", r.draftID), log.F("user_id", actorUserID))
+		return &ControlMessage{
+			Type:    ControlSnapshotRejected,
+			DraftID: r.draftID,
+			Reason:  snapshot.ReasonServerRejected,
+			Detail:  "This draft can no longer be edited.",
+		}
+	}
+	if contentJSON == "" {
+		return nil
+	}
+	cp := snapshot.Checkpoint{
+		DraftID:           r.draftID,
+		PolicyID:          r.policyID,
+		TemplateVersionID: r.templateVersionID,
+		ContentJSON:       contentJSON,
+		ActorUserID:       actorUserID,
+		Impersonator:      impersonator,
+	}
+	if r.pub != nil {
+		if out, ok := r.pub.PreCheck(ctx, cp); !ok {
+			r.logger.Debug("checkpoint refused: pre-check failed", log.F("draft_id", r.draftID), log.F("user_id", actorUserID))
+			return &ControlMessage{Type: ControlSnapshotRejected, DraftID: r.draftID, Reason: out.Reason, Detail: out.Detail}
+		}
+		return nil
+	}
+	if err := snapshot.ValidateLexicalJSON(contentJSON); err != nil {
+		r.logger.Debug("checkpoint refused: pre-check failed", log.F("draft_id", r.draftID), log.F("user_id", actorUserID))
+		return &ControlMessage{Type: ControlSnapshotRejected, DraftID: r.draftID, Reason: snapshot.ReasonPreCheckFailed, Detail: err.Error()}
+	}
+	return nil
+}
+
 // recordSnapshot is RecordSnapshot with the act-as admin of the connection.
 func (r *Room) recordSnapshot(ctx context.Context, contentJSON string, yjsState []byte, actorUserID, impersonator string) {
 	if contentJSON == "" && len(yjsState) == 0 {
