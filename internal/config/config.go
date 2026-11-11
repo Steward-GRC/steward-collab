@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Steward-GRC/steward-collab/internal/workloadauth"
+	workloadidentity "github.com/Bugs5382/go-workload-identity"
 )
 
 // MinTokenSecretLen is the shortest COLLAB_TOKEN_SECRET accepted, in bytes.
@@ -19,7 +19,7 @@ const MinTokenSecretLen = 32
 
 // DefaultTokenFile is where the release mounts collab's projected
 // service-account token.
-const DefaultTokenFile = workloadauth.DefaultTokenFile
+const DefaultTokenFile = "/var/run/secrets/steward/token" // #nosec G101 -- a file path, not a credential
 
 // Config is every setting the service runs with.
 type Config struct {
@@ -48,7 +48,7 @@ type Config struct {
 	// WorkloadAuth is false only for WORKLOAD_AUTH=disabled, on local runs.
 	WorkloadAuth bool
 	// Workload verifies the callers' service-account tokens.
-	Workload workloadauth.Config
+	Workload workloadidentity.Config
 	// TokenFile is collab's own projected token, sent on every call to core
 	// and identity; empty when WorkloadAuth is off.
 	TokenFile string
@@ -95,11 +95,11 @@ func Load(getenv func(string) string) (Config, error) {
 		errs = append(errs, errors.New("COLLAB_TOKEN_TTL_SECONDS must be a whole number of seconds above 0"))
 	}
 	c.TokenTTL = time.Duration(secs) * time.Second
-	if c.Workload, c.WorkloadAuth, err = workloadauth.ServerConfigFromEnv(getenv); err != nil {
+	if c.Workload, c.WorkloadAuth, err = serverWorkloadConfig(getenv); err != nil {
 		errs = append(errs, err)
 	}
 	if c.WorkloadAuth {
-		c.TokenFile = or(workloadauth.EnvTokenFile, DefaultTokenFile)
+		c.TokenFile = or(workloadidentity.EnvTokenFile, DefaultTokenFile)
 	}
 	return c, errors.Join(errs...)
 }
