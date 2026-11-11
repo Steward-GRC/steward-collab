@@ -39,9 +39,10 @@ fetch() {
 }
 
 fetch steward-audit "$STEWARD_AUDIT_REF" "${STEWARD_AUDIT_PROTO_DIR:-}" steward/audit
-# Only the two core files collab calls; policy.proto imports category.proto.
+# Only the core files collab calls; policy.proto imports category.proto.
 fetch steward-core "$STEWARD_CORE_REF" "${STEWARD_CORE_PROTO_DIR:-}" \
-  steward/core/v1/category.proto steward/core/v1/policy.proto
+  steward/core/v1/category.proto steward/core/v1/policy.proto \
+  steward/core/v1/policy_appendix.proto
 # The read service only; read.proto imports types.proto.
 fetch steward-identity "$STEWARD_IDENTITY_REF" "${STEWARD_IDENTITY_PROTO_DIR:-}" \
   steward/identity/v1/read.proto steward/identity/v1/types.proto

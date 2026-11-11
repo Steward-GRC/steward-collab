@@ -77,14 +77,17 @@ func (g *grpcPolicyClient) UpdateDraftContent(ctx context.Context, req SnapshotR
 // failure, a failed call or a refusal. Both name policy_version:<draft_id>, the
 // subject core uses for draft writes.
 type Publisher struct {
-	client  PolicyClient
-	auditor *audit.Emitter
-	logger  log.Logger
+	client PolicyClient
+	// appendix serves appendix rooms ("appendix:<id>"); see WithAppendixClient.
+	appendix AppendixClient
+	auditor  *audit.Emitter
+	logger   log.Logger
 }
 
 // NewPublisher returns a Publisher on a connection to core.
 func NewPublisher(conn grpc.ClientConnInterface, auditor *audit.Emitter, logger log.Logger) *Publisher {
-	return NewPublisherWithClient(&grpcPolicyClient{client: corev1.NewPolicyServiceClient(conn)}, auditor, logger)
+	return NewPublisherWithClient(&grpcPolicyClient{client: corev1.NewPolicyServiceClient(conn)}, auditor, logger).
+		WithAppendixClient(NewAppendixClient(corev1.NewPolicyAppendixServiceClient(conn)))
 }
 
 // NewPublisherWithClient returns a Publisher on client.
@@ -140,25 +143,18 @@ func (p *Publisher) SnapshotJSON(ctx context.Context, cp Checkpoint) Outcome {
 		return out
 	}
 
-	accepted, reason, err := p.client.UpdateDraftContent(ctx, SnapshotRequest{
-		PolicyID:          cp.PolicyID,
-		DraftID:           cp.DraftID,
-		ContentJSON:       cp.ContentJSON,
-		TemplateVersionID: cp.TemplateVersionID,
-		ActorUserID:       actor,
-		Impersonator:      p.impersonatorFor(cp, actor),
-	})
+	accepted, reason, err := p.checkpointToCore(ctx, cp, actor)
 	if err != nil {
-		p.logger.Error(err, "policy update draft content", log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID), log.F("grpc_code", status.Code(err).String()))
+		p.logger.Error(err, "core checkpoint call failed", log.F("room_kind", roomKind(cp)), log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID), log.F("grpc_code", status.Code(err).String()))
 		out := p.rejected(ctx, cp, actor, ReasonGRPCError, grpcDetail(err))
 		out.Code = status.Code(err)
 		return out
 	}
 	if !accepted {
-		p.logger.Warn("snapshot rejected by policy service", log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID), log.F("reason", reason))
+		p.logger.Warn("snapshot rejected by core", log.F("room_kind", roomKind(cp)), log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID), log.F("reason", reason))
 		return p.rejected(ctx, cp, actor, ReasonServerRejected, reason)
 	}
-	p.logger.Debug("snapshot accepted", log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID))
+	p.logger.Debug("snapshot accepted", log.F("room_kind", roomKind(cp)), log.F("draft_id", cp.DraftID), log.F("policy_id", cp.PolicyID))
 	p.emit(ctx, cp, actor, "collab.snapshot.accepted", nil)
 	return Outcome{Accepted: true}
 }
@@ -222,6 +218,13 @@ func (p *Publisher) emit(ctx context.Context, cp Checkpoint, actor, action strin
 		"draft_id":            cp.DraftID,
 		"template_version_id": cp.TemplateVersionID,
 	}
+	subject := "policy_version:" + cp.DraftID
+	if appendixID, ok := AppendixIDFromRoomKey(cp.DraftID); ok {
+		// An appendix room is keyed "appendix:<id>"; its audit subject is the
+		// appendix, and its attributes say which.
+		subject = cp.DraftID
+		attrs["appendix_id"] = appendixID
+	}
 	for k, v := range extra {
 		attrs[k] = v
 	}
@@ -229,7 +232,7 @@ func (p *Publisher) emit(ctx context.Context, cp Checkpoint, actor, action strin
 		Tier:        audit.TierAudit,
 		Action:      action,
 		ActorUserID: actor,
-		Subject:     "policy_version:" + cp.DraftID,
+		Subject:     subject,
 		Attributes:  attrs,
 	}
 	if imp := p.impersonatorFor(cp, actor); imp != "" {

@@ -39,6 +39,8 @@ const (
 	PolicyService_ListPoliciesByOwner_FullMethodName     = "/steward.core.v1.PolicyService/ListPoliciesByOwner"
 	PolicyService_ReassignUserPolicies_FullMethodName    = "/steward.core.v1.PolicyService/ReassignUserPolicies"
 	PolicyService_MovePolicy_FullMethodName              = "/steward.core.v1.PolicyService/MovePolicy"
+	PolicyService_PreviewMovePolicies_FullMethodName     = "/steward.core.v1.PolicyService/PreviewMovePolicies"
+	PolicyService_MovePolicies_FullMethodName            = "/steward.core.v1.PolicyService/MovePolicies"
 	PolicyService_DiffVersions_FullMethodName            = "/steward.core.v1.PolicyService/DiffVersions"
 	PolicyService_GetEffectiveTemplate_FullMethodName    = "/steward.core.v1.PolicyService/GetEffectiveTemplate"
 	PolicyService_SetPolicyTemplate_FullMethodName       = "/steward.core.v1.PolicyService/SetPolicyTemplate"
@@ -82,6 +84,10 @@ type PolicyServiceClient interface {
 	ListPoliciesByOwner(ctx context.Context, in *ListPoliciesByOwnerRequest, opts ...grpc.CallOption) (*ListPoliciesByOwnerResponse, error)
 	ReassignUserPolicies(ctx context.Context, in *ReassignUserPoliciesRequest, opts ...grpc.CallOption) (*ReassignUserPoliciesResponse, error)
 	MovePolicy(ctx context.Context, in *MovePolicyRequest, opts ...grpc.CallOption) (*MovePolicyResponse, error)
+	// PreviewMovePolicies is the dry run of MovePolicies.
+	PreviewMovePolicies(ctx context.Context, in *PreviewMovePoliciesRequest, opts ...grpc.CallOption) (*PreviewMovePoliciesResponse, error)
+	// MovePolicies moves several documents to one category, all or none.
+	MovePolicies(ctx context.Context, in *MovePoliciesRequest, opts ...grpc.CallOption) (*MovePoliciesResponse, error)
 	DiffVersions(ctx context.Context, in *DiffVersionsRequest, opts ...grpc.CallOption) (*DiffVersionsResponse, error)
 	GetEffectiveTemplate(ctx context.Context, in *GetEffectiveTemplateRequest, opts ...grpc.CallOption) (*GetEffectiveTemplateResponse, error)
 	SetPolicyTemplate(ctx context.Context, in *SetPolicyTemplateRequest, opts ...grpc.CallOption) (*SetPolicyTemplateResponse, error)
@@ -276,6 +282,26 @@ func (c *policyServiceClient) MovePolicy(ctx context.Context, in *MovePolicyRequ
 	return out, nil
 }
 
+func (c *policyServiceClient) PreviewMovePolicies(ctx context.Context, in *PreviewMovePoliciesRequest, opts ...grpc.CallOption) (*PreviewMovePoliciesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PreviewMovePoliciesResponse)
+	err := c.cc.Invoke(ctx, PolicyService_PreviewMovePolicies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) MovePolicies(ctx context.Context, in *MovePoliciesRequest, opts ...grpc.CallOption) (*MovePoliciesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MovePoliciesResponse)
+	err := c.cc.Invoke(ctx, PolicyService_MovePolicies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *policyServiceClient) DiffVersions(ctx context.Context, in *DiffVersionsRequest, opts ...grpc.CallOption) (*DiffVersionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DiffVersionsResponse)
@@ -425,6 +451,10 @@ type PolicyServiceServer interface {
 	ListPoliciesByOwner(context.Context, *ListPoliciesByOwnerRequest) (*ListPoliciesByOwnerResponse, error)
 	ReassignUserPolicies(context.Context, *ReassignUserPoliciesRequest) (*ReassignUserPoliciesResponse, error)
 	MovePolicy(context.Context, *MovePolicyRequest) (*MovePolicyResponse, error)
+	// PreviewMovePolicies is the dry run of MovePolicies.
+	PreviewMovePolicies(context.Context, *PreviewMovePoliciesRequest) (*PreviewMovePoliciesResponse, error)
+	// MovePolicies moves several documents to one category, all or none.
+	MovePolicies(context.Context, *MovePoliciesRequest) (*MovePoliciesResponse, error)
 	DiffVersions(context.Context, *DiffVersionsRequest) (*DiffVersionsResponse, error)
 	GetEffectiveTemplate(context.Context, *GetEffectiveTemplateRequest) (*GetEffectiveTemplateResponse, error)
 	SetPolicyTemplate(context.Context, *SetPolicyTemplateRequest) (*SetPolicyTemplateResponse, error)
@@ -499,6 +529,12 @@ func (UnimplementedPolicyServiceServer) ReassignUserPolicies(context.Context, *R
 }
 func (UnimplementedPolicyServiceServer) MovePolicy(context.Context, *MovePolicyRequest) (*MovePolicyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method MovePolicy not implemented")
+}
+func (UnimplementedPolicyServiceServer) PreviewMovePolicies(context.Context, *PreviewMovePoliciesRequest) (*PreviewMovePoliciesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PreviewMovePolicies not implemented")
+}
+func (UnimplementedPolicyServiceServer) MovePolicies(context.Context, *MovePoliciesRequest) (*MovePoliciesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MovePolicies not implemented")
 }
 func (UnimplementedPolicyServiceServer) DiffVersions(context.Context, *DiffVersionsRequest) (*DiffVersionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DiffVersions not implemented")
@@ -863,6 +899,42 @@ func _PolicyService_MovePolicy_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PolicyService_PreviewMovePolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PreviewMovePoliciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).PreviewMovePolicies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_PreviewMovePolicies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).PreviewMovePolicies(ctx, req.(*PreviewMovePoliciesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_MovePolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MovePoliciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).MovePolicies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_MovePolicies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).MovePolicies(ctx, req.(*MovePoliciesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PolicyService_DiffVersions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DiffVersionsRequest)
 	if err := dec(in); err != nil {
@@ -1153,6 +1225,14 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MovePolicy",
 			Handler:    _PolicyService_MovePolicy_Handler,
+		},
+		{
+			MethodName: "PreviewMovePolicies",
+			Handler:    _PolicyService_PreviewMovePolicies_Handler,
+		},
+		{
+			MethodName: "MovePolicies",
+			Handler:    _PolicyService_MovePolicies_Handler,
 		},
 		{
 			MethodName: "DiffVersions",

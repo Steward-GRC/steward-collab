@@ -21,10 +21,34 @@ from a caller the method lists as acting on a user's behalf.
 | --- | --- |
 | `IssueToken` | Checks that the caller may edit the draft, then mints a short-lived token for the room. The token names the effective actor; during act-as it also names the real admin. Returns the token, the websocket path (`/collab/ws/<draft_id>`, behind the gateway) and the expiry. |
 
+| `IssueAppendixToken` | The same for an appendix's own room, `appendix:<appendix_id>`. Takes only `appendix_id`; collab reads the appendix's policy from core (`GetPolicyAppendix`) and runs the edit check against it, so a caller cannot pair an appendix with a policy it may edit. Returns the token, the websocket path (`/collab/ws/appendix%3A<appendix_id>`), the expiry, the `room_key` and the `policy_id`. |
+
 The edit check: the policy's owner, or a caller whose `policy.author` grant (steward-authz) is
 scoped to the policy's home category or one of its ancestors. Site admins pass through
 steward-authz. Refused with `DRAFT_EDIT_FORBIDDEN`; `POLICY_NOT_FOUND` when core has no such
 policy; `EDIT_CHECK_UNAVAILABLE` when core or identity can't be reached.
+
+`IssueAppendixToken` refuses with `APPENDIX_ID_REQUIRED`, `APPENDIX_NOT_FOUND` (checked first),
+then the edit check above, then `APPENDIX_RETIRED`: a person who may not edit learns nothing about
+a retired appendix. `IssueToken` refuses a `draft_id` that starts with `appendix:`
+(`DRAFT_ID_RESERVED`), because the room key decides which core call a checkpoint goes to.
+
+## Appendix rooms
+
+An appendix has a room of its own, keyed `appendix:<appendix_id>`, with its own token. It behaves
+as a policy room does: the same checkpoint pre-check (`pre_check_failed` at once for content that
+is not a JSON object with a `root`), the same `snapshot.rejected` with `server_rejected` when core
+refuses, the same acknowledgment after core answers, no reply to a Yjs-only checkpoint, the same
+flush and the same read-only freeze. Only the core call differs: a checkpoint goes to
+`PolicyAppendixService.CheckpointAppendixDraft(id, policy_id, content_json, actor_user_id)`, which
+validates the content, makes no draft when it equals the published row, updates the open draft or
+starts the next one, refuses a retired appendix and records the actor as a contributor. The control
+frames name the room key in `draft_id`.
+
+To publish an appendix the gateway uses the room calls below with `draft_id` set to the room key
+(`room_key` from `IssueAppendixToken`) and `policy_id` the appendix's policy: `FlushDraft` first,
+then core's `PublishAppendix`, then `NotifyDraftPublished`. The websocket path of the token is
+`/ws/appendix:<id>` (the gateway forwards it percent-decoded or not; the handler reads it decoded).
 
 ## CollabRoomService
 
@@ -99,7 +123,7 @@ own service-account token (`WORKLOAD_TOKEN_FILE`) and the request's actor on eve
 
 | Service | Calls | Why |
 | --- | --- | --- |
-| steward-core | `PolicyService.GetPolicy`, `PolicyService.UpdateDraftContent`, `CategoryService.GetCategory` | the edit check (owner, home category and its ancestors) and every snapshot |
+| steward-core | `PolicyService.GetPolicy`, `PolicyService.UpdateDraftContent`, `CategoryService.GetCategory`, `PolicyAppendixService.GetPolicyAppendix`, `PolicyAppendixService.CheckpointAppendixDraft` | the edit check (owner, home category and its ancestors), every policy snapshot, the appendix lookup behind `IssueAppendixToken` and every appendix snapshot |
 | steward-identity | `IdentityReadService.GetUser` | the caller's roles and scoped grants for the edit check, and the presence name |
 | steward-audit | publishes `steward.audit.v1.AuditEvent` to the `audit` exchange | `collab.token.issued`, `collab.session.joined` and `left`, `collab.snapshot.accepted` and `rejected`, `collab.room.frozen` |
 

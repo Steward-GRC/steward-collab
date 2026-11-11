@@ -19,6 +19,7 @@ import (
 func TestCallerPolicyPerMethod(t *testing.T) {
 	methods := map[string]string{
 		"IssueToken":           collabv1.CollabTokenService_IssueToken_FullMethodName,
+		"IssueAppendixToken":   collabv1.CollabTokenService_IssueAppendixToken_FullMethodName,
 		"FlushDraft":           collabv1.CollabRoomService_FlushDraft_FullMethodName,
 		"NotifyDraftPublished": collabv1.CollabRoomService_NotifyDraftPublished_FullMethodName,
 	}

@@ -22,7 +22,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CollabTokenService_IssueToken_FullMethodName = "/steward.collab.v1.CollabTokenService/IssueToken"
+	CollabTokenService_IssueToken_FullMethodName         = "/steward.collab.v1.CollabTokenService/IssueToken"
+	CollabTokenService_IssueAppendixToken_FullMethodName = "/steward.collab.v1.CollabTokenService/IssueAppendixToken"
 )
 
 // CollabTokenServiceClient is the client API for CollabTokenService service.
@@ -36,6 +37,11 @@ type CollabTokenServiceClient interface {
 	// the caller's own actor, read from the go-grpc-actor metadata. During
 	// act-as the token names the target and carries the real admin.
 	IssueToken(ctx context.Context, in *IssueTokenRequest, opts ...grpc.CallOption) (*IssueTokenResponse, error)
+	// IssueAppendixToken authorizes the caller to edit the appendix's policy and
+	// mints a token for the appendix's own room, "appendix:<appendix_id>". The
+	// checks are the policy token's: the caller must be allowed to edit the
+	// policy the appendix belongs to, which collab reads from core.
+	IssueAppendixToken(ctx context.Context, in *IssueAppendixTokenRequest, opts ...grpc.CallOption) (*IssueAppendixTokenResponse, error)
 }
 
 type collabTokenServiceClient struct {
@@ -56,6 +62,16 @@ func (c *collabTokenServiceClient) IssueToken(ctx context.Context, in *IssueToke
 	return out, nil
 }
 
+func (c *collabTokenServiceClient) IssueAppendixToken(ctx context.Context, in *IssueAppendixTokenRequest, opts ...grpc.CallOption) (*IssueAppendixTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueAppendixTokenResponse)
+	err := c.cc.Invoke(ctx, CollabTokenService_IssueAppendixToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CollabTokenServiceServer is the server API for CollabTokenService service.
 // All implementations must embed UnimplementedCollabTokenServiceServer
 // for forward compatibility.
@@ -67,6 +83,11 @@ type CollabTokenServiceServer interface {
 	// the caller's own actor, read from the go-grpc-actor metadata. During
 	// act-as the token names the target and carries the real admin.
 	IssueToken(context.Context, *IssueTokenRequest) (*IssueTokenResponse, error)
+	// IssueAppendixToken authorizes the caller to edit the appendix's policy and
+	// mints a token for the appendix's own room, "appendix:<appendix_id>". The
+	// checks are the policy token's: the caller must be allowed to edit the
+	// policy the appendix belongs to, which collab reads from core.
+	IssueAppendixToken(context.Context, *IssueAppendixTokenRequest) (*IssueAppendixTokenResponse, error)
 	mustEmbedUnimplementedCollabTokenServiceServer()
 }
 
@@ -79,6 +100,9 @@ type UnimplementedCollabTokenServiceServer struct{}
 
 func (UnimplementedCollabTokenServiceServer) IssueToken(context.Context, *IssueTokenRequest) (*IssueTokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method IssueToken not implemented")
+}
+func (UnimplementedCollabTokenServiceServer) IssueAppendixToken(context.Context, *IssueAppendixTokenRequest) (*IssueAppendixTokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method IssueAppendixToken not implemented")
 }
 func (UnimplementedCollabTokenServiceServer) mustEmbedUnimplementedCollabTokenServiceServer() {}
 func (UnimplementedCollabTokenServiceServer) testEmbeddedByValue()                            {}
@@ -119,6 +143,24 @@ func _CollabTokenService_IssueToken_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CollabTokenService_IssueAppendixToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueAppendixTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CollabTokenServiceServer).IssueAppendixToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CollabTokenService_IssueAppendixToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CollabTokenServiceServer).IssueAppendixToken(ctx, req.(*IssueAppendixTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CollabTokenService_ServiceDesc is the grpc.ServiceDesc for CollabTokenService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -129,6 +171,10 @@ var CollabTokenService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IssueToken",
 			Handler:    _CollabTokenService_IssueToken_Handler,
+		},
+		{
+			MethodName: "IssueAppendixToken",
+			Handler:    _CollabTokenService_IssueAppendixToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

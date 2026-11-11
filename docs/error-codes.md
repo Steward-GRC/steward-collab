@@ -18,3 +18,7 @@ the caller; every other code is sent as `Code N: Internal Error`.
 | 8509 | `FLUSH_TIMEOUT` | flush | core didn't answer the live room's checkpoint in time; it stays queued for a retry | yes |
 | 8510 | `POLICY_NOT_FOUND` | token | core has no policy with the requested id | yes |
 | 8511 | `EDIT_CHECK_UNAVAILABLE` | token | core or identity couldn't be reached to decide whether the caller may edit the draft | yes |
+| 8512 | `APPENDIX_ID_REQUIRED` | request | the request has no appendix_id; the gateway always sets it, so this is a client bug | no |
+| 8513 | `APPENDIX_NOT_FOUND` | token | core has no appendix with the requested id | yes |
+| 8514 | `APPENDIX_RETIRED` | token | the appendix is retired, so it has no draft to co-edit | yes |
+| 8515 | `DRAFT_ID_RESERVED` | request | the draft_id starts with "appendix:", which names an appendix room; a policy token may not name one, or a policy's editor could join another policy's appendix room (use IssueAppendixToken) | no |

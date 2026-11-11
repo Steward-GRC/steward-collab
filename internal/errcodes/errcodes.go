@@ -32,6 +32,10 @@ const (
 	CodeFlushTimeout         = 8509
 	CodePolicyNotFound       = 8510
 	CodeEditCheckUnavailable = 8511
+	CodeAppendixIDRequired   = 8512
+	CodeAppendixNotFound     = 8513
+	CodeAppendixRetired      = 8514
+	CodeDraftIDReserved      = 8515
 )
 
 // Entries returns the registry entries.
@@ -67,6 +71,16 @@ func Entries() []apperr.Entry {
 		{Code: CodeEditCheckUnavailable, Symbol: "EDIT_CHECK_UNAVAILABLE", Category: apperr.CategoryUnavailable,
 			Title: "token", Cause: "core or identity couldn't be reached to decide whether the caller may edit the draft",
 			UserSafe: true, Message: "Co-editing can't start right now. Try again in a moment."},
+		{Code: CodeAppendixIDRequired, Symbol: "APPENDIX_ID_REQUIRED", Category: apperr.CategoryInvalid,
+			Title: "request", Cause: "the request has no appendix_id; the gateway always sets it, so this is a client bug"},
+		{Code: CodeAppendixNotFound, Symbol: "APPENDIX_NOT_FOUND", Category: apperr.CategoryNotFound,
+			Title: "token", Cause: "core has no appendix with the requested id",
+			UserSafe: true, Message: "This appendix no longer exists."},
+		{Code: CodeAppendixRetired, Symbol: "APPENDIX_RETIRED", Category: apperr.CategoryFailedPrecondition,
+			Title: "token", Cause: "the appendix is retired, so it has no draft to co-edit",
+			UserSafe: true, Message: "This appendix has been retired and can't be edited."},
+		{Code: CodeDraftIDReserved, Symbol: "DRAFT_ID_RESERVED", Category: apperr.CategoryInvalid,
+			Title: "request", Cause: "the draft_id starts with \"appendix:\", which names an appendix room; a policy token may not name one, or a policy's editor could join another policy's appendix room (use IssueAppendixToken)"},
 	}
 }
 

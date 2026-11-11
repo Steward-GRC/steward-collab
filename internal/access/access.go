@@ -28,6 +28,49 @@ var (
 	ErrUnavailable = errors.New("access: a peer service is unavailable")
 )
 
+// ErrAppendixNotFound means core has no such appendix.
+var ErrAppendixNotFound = errors.New("access: appendix not found")
+
+// AppendixInfo is what the appendix token needs of an appendix: the policy it
+// belongs to, to run the edit check against, and whether it is retired.
+type AppendixInfo struct {
+	PolicyID string
+	Retired  bool
+}
+
+// AppendixReader looks an appendix up in core. It returns ErrAppendixNotFound
+// for an unknown id and an error wrapping ErrUnavailable when core can't answer.
+type AppendixReader interface {
+	GetAppendix(ctx context.Context, id string) (AppendixInfo, error)
+}
+
+// AppendixClient is the part of core's PolicyAppendixService the lookup calls.
+type AppendixClient interface {
+	GetPolicyAppendix(ctx context.Context, in *corev1.GetPolicyAppendixRequest, opts ...grpc.CallOption) (*corev1.GetPolicyAppendixResponse, error)
+}
+
+type appendixLookup struct{ client AppendixClient }
+
+// NewAppendixLookup returns the AppendixReader over core.
+func NewAppendixLookup(client AppendixClient) AppendixReader { return appendixLookup{client: client} }
+
+// GetAppendix reads the appendix's policy and whether it is retired. Core
+// returns a retired appendix too, with retired_at set.
+func (l appendixLookup) GetAppendix(ctx context.Context, id string) (AppendixInfo, error) {
+	resp, err := l.client.GetPolicyAppendix(ctx, &corev1.GetPolicyAppendixRequest{Id: id})
+	if status.Code(err) == codes.NotFound {
+		return AppendixInfo{}, ErrAppendixNotFound
+	}
+	if err != nil {
+		return AppendixInfo{}, peerErr("core GetPolicyAppendix", err)
+	}
+	a := resp.GetAppendix()
+	if a == nil {
+		return AppendixInfo{}, ErrAppendixNotFound
+	}
+	return AppendixInfo{PolicyID: a.GetPolicyId(), Retired: a.GetRetiredAt() != nil}, nil
+}
+
 // maxDepth bounds the walk up the category tree. Core keeps the tree three
 // levels deep; the bound only stops a corrupt parent loop.
 const maxDepth = 16

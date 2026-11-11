@@ -112,7 +112,10 @@ func run(ctx context.Context, logger log.Logger) error {
 	go hub.Run(ctx)
 	edit := access.New(identityv1.NewIdentityReadServiceClient(identityConn),
 		corev1.NewPolicyServiceClient(coreConn), corev1.NewCategoryServiceClient(coreConn))
-	tokens := grpcsvc.NewTokenService(grpcsvc.TokenOptions{Secret: cfg.TokenSecret, TTL: cfg.TokenTTL, WsBase: cfg.WsBase}, edit, auditor, logger)
+	tokens := grpcsvc.NewTokenService(grpcsvc.TokenOptions{
+		Secret: cfg.TokenSecret, TTL: cfg.TokenTTL, WsBase: cfg.WsBase,
+		Appendices: access.NewAppendixLookup(corev1.NewPolicyAppendixServiceClient(coreConn)),
+	}, edit, auditor, logger)
 	rooms := grpcsvc.NewRoomService(hub, auditor, logger)
 
 	deps := readiness.Deps{
