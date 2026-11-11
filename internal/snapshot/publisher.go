@@ -86,7 +86,8 @@ type Publisher struct {
 
 // NewPublisher returns a Publisher on a connection to core.
 func NewPublisher(conn grpc.ClientConnInterface, auditor *audit.Emitter, logger log.Logger) *Publisher {
-	return NewPublisherWithClient(&grpcPolicyClient{client: corev1.NewPolicyServiceClient(conn)}, auditor, logger)
+	return NewPublisherWithClient(&grpcPolicyClient{client: corev1.NewPolicyServiceClient(conn)}, auditor, logger).
+		WithAppendixClient(NewAppendixClient(corev1.NewPolicyAppendixServiceClient(conn)))
 }
 
 // NewPublisherWithClient returns a Publisher on client.

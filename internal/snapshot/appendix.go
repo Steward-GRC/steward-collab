@@ -7,9 +7,13 @@ import (
 	"context"
 	"strings"
 
+	grpcactor "github.com/Bugs5382/go-grpc-actor"
 	log "github.com/Bugs5382/go-log"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	corev1 "github.com/Steward-GRC/steward-collab/gen/go/thirdparty/core/v1"
 )
 
 // AppendixRoomPrefix starts the room key of an appendix room: "appendix:<id>".
@@ -99,4 +103,36 @@ func roomKind(cp Checkpoint) string {
 		return kindAppendix
 	}
 	return kindPolicy
+}
+
+// appendixCore is core's PolicyAppendixService client as far as checkpoints go.
+type appendixCore interface {
+	CheckpointAppendixDraft(ctx context.Context, in *corev1.CheckpointAppendixDraftRequest, opts ...grpc.CallOption) (*corev1.CheckpointAppendixDraftResponse, error)
+}
+
+type grpcAppendixClient struct{ client appendixCore }
+
+// NewAppendixClient returns the AppendixClient over core's
+// PolicyAppendixService. Like the policy call it puts the actor on the call, so
+// go-grpc-actor's client interceptor carries it (and during act-as the real
+// admin) to core; the system actor is a fallback, not a person, and travels in
+// the request only.
+func NewAppendixClient(client appendixCore) AppendixClient {
+	return &grpcAppendixClient{client: client}
+}
+
+func (g *grpcAppendixClient) CheckpointAppendixDraft(ctx context.Context, req AppendixRequest) (bool, string, error) {
+	if req.ActorUserID != SystemActorID {
+		ctx = grpcactor.WithActor(ctx, grpcactor.Actor{Subject: req.ActorUserID, Impersonator: req.Impersonator})
+	}
+	resp, err := g.client.CheckpointAppendixDraft(ctx, &corev1.CheckpointAppendixDraftRequest{
+		Id:          req.AppendixID,
+		PolicyId:    req.PolicyID,
+		ContentJson: req.ContentJSON,
+		ActorUserId: req.ActorUserID,
+	})
+	if err != nil {
+		return false, "", err
+	}
+	return resp.GetAccepted(), resp.GetRejectReason(), nil
 }

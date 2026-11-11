@@ -33,6 +33,11 @@ const (
 	PolicyVersionStatus_POLICY_VERSION_STATUS_PUBLISHED   PolicyVersionStatus = 2
 	PolicyVersionStatus_POLICY_VERSION_STATUS_SUPERSEDED  PolicyVersionStatus = 3
 	PolicyVersionStatus_POLICY_VERSION_STATUS_ARCHIVED    PolicyVersionStatus = 4
+	// Submitted for approval. The version keeps the draft slot and stays editable.
+	PolicyVersionStatus_POLICY_VERSION_STATUS_IN_REVIEW PolicyVersionStatus = 5
+	// Turned down by its approvers. Final: it stays stored as it was, is not the
+	// draft, and the author's next save starts a new draft.
+	PolicyVersionStatus_POLICY_VERSION_STATUS_REJECTED PolicyVersionStatus = 6
 )
 
 // Enum value maps for PolicyVersionStatus.
@@ -43,6 +48,8 @@ var (
 		2: "POLICY_VERSION_STATUS_PUBLISHED",
 		3: "POLICY_VERSION_STATUS_SUPERSEDED",
 		4: "POLICY_VERSION_STATUS_ARCHIVED",
+		5: "POLICY_VERSION_STATUS_IN_REVIEW",
+		6: "POLICY_VERSION_STATUS_REJECTED",
 	}
 	PolicyVersionStatus_value = map[string]int32{
 		"POLICY_VERSION_STATUS_UNSPECIFIED": 0,
@@ -50,6 +57,8 @@ var (
 		"POLICY_VERSION_STATUS_PUBLISHED":   2,
 		"POLICY_VERSION_STATUS_SUPERSEDED":  3,
 		"POLICY_VERSION_STATUS_ARCHIVED":    4,
+		"POLICY_VERSION_STATUS_IN_REVIEW":   5,
+		"POLICY_VERSION_STATUS_REJECTED":    6,
 	}
 )
 
@@ -1777,8 +1786,10 @@ func (*RecordBreakGlassReadResponse) Descriptor() ([]byte, []int) {
 	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{26}
 }
 
-// SetVersionStatusRequest writes a version's stored status: draft,
-// published, superseded or archived. The approval states live in workflow.
+// SetVersionStatusRequest writes a version's stored status: draft, in_review,
+// rejected, published, superseded or archived. Moving a version to in_review
+// is the submit: it is refused with INVALID_ARGUMENT while the version holds no
+// text. The per-stage approval states stay in workflow.
 type SetVersionStatusRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	PolicyVersionId string                 `protobuf:"bytes,1,opt,name=policy_version_id,json=policyVersionId,proto3" json:"policy_version_id,omitempty"`
@@ -2315,6 +2326,309 @@ func (x *MovePolicyResponse) GetPolicy() *Policy {
 	return nil
 }
 
+// MovePoliciesItem is one document in a bulk move. new_number is empty when the
+// document cannot move; then refusal_code names why (RETIRED,
+// CATEGORY_REFUSES_TYPE) and refusal is the sentence to show. Both are empty
+// when it can.
+type MovePoliciesItem struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	PolicyId string                 `protobuf:"bytes,1,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty"`
+	Title    string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	// number is the document's number before the move.
+	Number        string `protobuf:"bytes,3,opt,name=number,proto3" json:"number,omitempty"`
+	NewNumber     string `protobuf:"bytes,4,opt,name=new_number,json=newNumber,proto3" json:"new_number,omitempty"`
+	RefusalCode   string `protobuf:"bytes,5,opt,name=refusal_code,json=refusalCode,proto3" json:"refusal_code,omitempty"`
+	Refusal       string `protobuf:"bytes,6,opt,name=refusal,proto3" json:"refusal,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MovePoliciesItem) Reset() {
+	*x = MovePoliciesItem{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MovePoliciesItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MovePoliciesItem) ProtoMessage() {}
+
+func (x *MovePoliciesItem) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MovePoliciesItem.ProtoReflect.Descriptor instead.
+func (*MovePoliciesItem) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *MovePoliciesItem) GetPolicyId() string {
+	if x != nil {
+		return x.PolicyId
+	}
+	return ""
+}
+
+func (x *MovePoliciesItem) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *MovePoliciesItem) GetNumber() string {
+	if x != nil {
+		return x.Number
+	}
+	return ""
+}
+
+func (x *MovePoliciesItem) GetNewNumber() string {
+	if x != nil {
+		return x.NewNumber
+	}
+	return ""
+}
+
+func (x *MovePoliciesItem) GetRefusalCode() string {
+	if x != nil {
+		return x.RefusalCode
+	}
+	return ""
+}
+
+func (x *MovePoliciesItem) GetRefusal() string {
+	if x != nil {
+		return x.Refusal
+	}
+	return ""
+}
+
+// PreviewMovePoliciesRequest asks what moving the documents to home_category_id
+// would do. Nothing changes.
+type PreviewMovePoliciesRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	PolicyIds      []string               `protobuf:"bytes,1,rep,name=policy_ids,json=policyIds,proto3" json:"policy_ids,omitempty"`
+	HomeCategoryId string                 `protobuf:"bytes,2,opt,name=home_category_id,json=homeCategoryId,proto3" json:"home_category_id,omitempty"`
+	ActorUserId    string                 `protobuf:"bytes,3,opt,name=actor_user_id,json=actorUserId,proto3" json:"actor_user_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *PreviewMovePoliciesRequest) Reset() {
+	*x = PreviewMovePoliciesRequest{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewMovePoliciesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewMovePoliciesRequest) ProtoMessage() {}
+
+func (x *PreviewMovePoliciesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewMovePoliciesRequest.ProtoReflect.Descriptor instead.
+func (*PreviewMovePoliciesRequest) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *PreviewMovePoliciesRequest) GetPolicyIds() []string {
+	if x != nil {
+		return x.PolicyIds
+	}
+	return nil
+}
+
+func (x *PreviewMovePoliciesRequest) GetHomeCategoryId() string {
+	if x != nil {
+		return x.HomeCategoryId
+	}
+	return ""
+}
+
+func (x *PreviewMovePoliciesRequest) GetActorUserId() string {
+	if x != nil {
+		return x.ActorUserId
+	}
+	return ""
+}
+
+type PreviewMovePoliciesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// items follow the order of policy_ids.
+	Items         []*MovePoliciesItem `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewMovePoliciesResponse) Reset() {
+	*x = PreviewMovePoliciesResponse{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewMovePoliciesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewMovePoliciesResponse) ProtoMessage() {}
+
+func (x *PreviewMovePoliciesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewMovePoliciesResponse.ProtoReflect.Descriptor instead.
+func (*PreviewMovePoliciesResponse) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *PreviewMovePoliciesResponse) GetItems() []*MovePoliciesItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+// MovePoliciesRequest moves the documents to home_category_id, all or none:
+// it is refused whole, with the first document's refusal, if any would be
+// refused. Each document is renumbered from the target's sequence, in order.
+type MovePoliciesRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	PolicyIds      []string               `protobuf:"bytes,1,rep,name=policy_ids,json=policyIds,proto3" json:"policy_ids,omitempty"`
+	HomeCategoryId string                 `protobuf:"bytes,2,opt,name=home_category_id,json=homeCategoryId,proto3" json:"home_category_id,omitempty"`
+	ActorUserId    string                 `protobuf:"bytes,3,opt,name=actor_user_id,json=actorUserId,proto3" json:"actor_user_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MovePoliciesRequest) Reset() {
+	*x = MovePoliciesRequest{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MovePoliciesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MovePoliciesRequest) ProtoMessage() {}
+
+func (x *MovePoliciesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MovePoliciesRequest.ProtoReflect.Descriptor instead.
+func (*MovePoliciesRequest) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *MovePoliciesRequest) GetPolicyIds() []string {
+	if x != nil {
+		return x.PolicyIds
+	}
+	return nil
+}
+
+func (x *MovePoliciesRequest) GetHomeCategoryId() string {
+	if x != nil {
+		return x.HomeCategoryId
+	}
+	return ""
+}
+
+func (x *MovePoliciesRequest) GetActorUserId() string {
+	if x != nil {
+		return x.ActorUserId
+	}
+	return ""
+}
+
+type MovePoliciesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Moved         []*MovePoliciesItem    `protobuf:"bytes,1,rep,name=moved,proto3" json:"moved,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MovePoliciesResponse) Reset() {
+	*x = MovePoliciesResponse{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MovePoliciesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MovePoliciesResponse) ProtoMessage() {}
+
+func (x *MovePoliciesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MovePoliciesResponse.ProtoReflect.Descriptor instead.
+func (*MovePoliciesResponse) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *MovePoliciesResponse) GetMoved() []*MovePoliciesItem {
+	if x != nil {
+		return x.Moved
+	}
+	return nil
+}
+
 type DiffVersionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FromVersionId string                 `protobuf:"bytes,1,opt,name=from_version_id,json=fromVersionId,proto3" json:"from_version_id,omitempty"`
@@ -2325,7 +2639,7 @@ type DiffVersionsRequest struct {
 
 func (x *DiffVersionsRequest) Reset() {
 	*x = DiffVersionsRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[37]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2337,7 +2651,7 @@ func (x *DiffVersionsRequest) String() string {
 func (*DiffVersionsRequest) ProtoMessage() {}
 
 func (x *DiffVersionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[37]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2350,7 +2664,7 @@ func (x *DiffVersionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiffVersionsRequest.ProtoReflect.Descriptor instead.
 func (*DiffVersionsRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{37}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *DiffVersionsRequest) GetFromVersionId() string {
@@ -2376,7 +2690,7 @@ type DiffVersionsResponse struct {
 
 func (x *DiffVersionsResponse) Reset() {
 	*x = DiffVersionsResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[38]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2388,7 +2702,7 @@ func (x *DiffVersionsResponse) String() string {
 func (*DiffVersionsResponse) ProtoMessage() {}
 
 func (x *DiffVersionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[38]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2401,7 +2715,7 @@ func (x *DiffVersionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiffVersionsResponse.ProtoReflect.Descriptor instead.
 func (*DiffVersionsResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{38}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *DiffVersionsResponse) GetDiffs() []*SectionDiff {
@@ -2420,7 +2734,7 @@ type GetEffectiveTemplateRequest struct {
 
 func (x *GetEffectiveTemplateRequest) Reset() {
 	*x = GetEffectiveTemplateRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[39]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2432,7 +2746,7 @@ func (x *GetEffectiveTemplateRequest) String() string {
 func (*GetEffectiveTemplateRequest) ProtoMessage() {}
 
 func (x *GetEffectiveTemplateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[39]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2445,7 +2759,7 @@ func (x *GetEffectiveTemplateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEffectiveTemplateRequest.ProtoReflect.Descriptor instead.
 func (*GetEffectiveTemplateRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{39}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *GetEffectiveTemplateRequest) GetPolicyId() string {
@@ -2467,7 +2781,7 @@ type GetEffectiveTemplateResponse struct {
 
 func (x *GetEffectiveTemplateResponse) Reset() {
 	*x = GetEffectiveTemplateResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[40]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2479,7 +2793,7 @@ func (x *GetEffectiveTemplateResponse) String() string {
 func (*GetEffectiveTemplateResponse) ProtoMessage() {}
 
 func (x *GetEffectiveTemplateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[40]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2492,7 +2806,7 @@ func (x *GetEffectiveTemplateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEffectiveTemplateResponse.ProtoReflect.Descriptor instead.
 func (*GetEffectiveTemplateResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{40}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *GetEffectiveTemplateResponse) GetTemplateId() string {
@@ -2530,7 +2844,7 @@ type SetPolicyTemplateRequest struct {
 
 func (x *SetPolicyTemplateRequest) Reset() {
 	*x = SetPolicyTemplateRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[41]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2542,7 +2856,7 @@ func (x *SetPolicyTemplateRequest) String() string {
 func (*SetPolicyTemplateRequest) ProtoMessage() {}
 
 func (x *SetPolicyTemplateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[41]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2555,7 +2869,7 @@ func (x *SetPolicyTemplateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPolicyTemplateRequest.ProtoReflect.Descriptor instead.
 func (*SetPolicyTemplateRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{41}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *SetPolicyTemplateRequest) GetPolicyId() string {
@@ -2595,7 +2909,7 @@ type SetPolicyTemplateResponse struct {
 
 func (x *SetPolicyTemplateResponse) Reset() {
 	*x = SetPolicyTemplateResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[42]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2607,7 +2921,7 @@ func (x *SetPolicyTemplateResponse) String() string {
 func (*SetPolicyTemplateResponse) ProtoMessage() {}
 
 func (x *SetPolicyTemplateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[42]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2620,7 +2934,7 @@ func (x *SetPolicyTemplateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPolicyTemplateResponse.ProtoReflect.Descriptor instead.
 func (*SetPolicyTemplateResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{42}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *SetPolicyTemplateResponse) GetPolicy() *Policy {
@@ -2643,7 +2957,7 @@ type SetPolicySensitivityRequest struct {
 
 func (x *SetPolicySensitivityRequest) Reset() {
 	*x = SetPolicySensitivityRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[43]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2655,7 +2969,7 @@ func (x *SetPolicySensitivityRequest) String() string {
 func (*SetPolicySensitivityRequest) ProtoMessage() {}
 
 func (x *SetPolicySensitivityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[43]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2668,7 +2982,7 @@ func (x *SetPolicySensitivityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPolicySensitivityRequest.ProtoReflect.Descriptor instead.
 func (*SetPolicySensitivityRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{43}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *SetPolicySensitivityRequest) GetPolicyId() string {
@@ -2701,7 +3015,7 @@ type SetPolicySensitivityResponse struct {
 
 func (x *SetPolicySensitivityResponse) Reset() {
 	*x = SetPolicySensitivityResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[44]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2713,7 +3027,7 @@ func (x *SetPolicySensitivityResponse) String() string {
 func (*SetPolicySensitivityResponse) ProtoMessage() {}
 
 func (x *SetPolicySensitivityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[44]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2726,7 +3040,7 @@ func (x *SetPolicySensitivityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPolicySensitivityResponse.ProtoReflect.Descriptor instead.
 func (*SetPolicySensitivityResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{44}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *SetPolicySensitivityResponse) GetPolicy() *Policy {
@@ -2750,7 +3064,7 @@ type RenamePolicyRequest struct {
 
 func (x *RenamePolicyRequest) Reset() {
 	*x = RenamePolicyRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[45]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2762,7 +3076,7 @@ func (x *RenamePolicyRequest) String() string {
 func (*RenamePolicyRequest) ProtoMessage() {}
 
 func (x *RenamePolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[45]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2775,7 +3089,7 @@ func (x *RenamePolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenamePolicyRequest.ProtoReflect.Descriptor instead.
 func (*RenamePolicyRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{45}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *RenamePolicyRequest) GetPolicyId() string {
@@ -2810,7 +3124,7 @@ type RenamePolicyResponse struct {
 
 func (x *RenamePolicyResponse) Reset() {
 	*x = RenamePolicyResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[46]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2822,7 +3136,7 @@ func (x *RenamePolicyResponse) String() string {
 func (*RenamePolicyResponse) ProtoMessage() {}
 
 func (x *RenamePolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[46]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2835,7 +3149,7 @@ func (x *RenamePolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenamePolicyResponse.ProtoReflect.Descriptor instead.
 func (*RenamePolicyResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{46}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *RenamePolicyResponse) GetPolicy() *Policy {
@@ -2875,7 +3189,7 @@ type UpdateDraftContentRequest struct {
 
 func (x *UpdateDraftContentRequest) Reset() {
 	*x = UpdateDraftContentRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[47]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2887,7 +3201,7 @@ func (x *UpdateDraftContentRequest) String() string {
 func (*UpdateDraftContentRequest) ProtoMessage() {}
 
 func (x *UpdateDraftContentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[47]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2900,7 +3214,7 @@ func (x *UpdateDraftContentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDraftContentRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDraftContentRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{47}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *UpdateDraftContentRequest) GetPolicyId() string {
@@ -2950,7 +3264,7 @@ type UpdateDraftContentResponse struct {
 
 func (x *UpdateDraftContentResponse) Reset() {
 	*x = UpdateDraftContentResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[48]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2962,7 +3276,7 @@ func (x *UpdateDraftContentResponse) String() string {
 func (*UpdateDraftContentResponse) ProtoMessage() {}
 
 func (x *UpdateDraftContentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[48]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2975,7 +3289,7 @@ func (x *UpdateDraftContentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDraftContentResponse.ProtoReflect.Descriptor instead.
 func (*UpdateDraftContentResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{48}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *UpdateDraftContentResponse) GetDraftId() string {
@@ -3011,7 +3325,7 @@ type SetAckRequest struct {
 
 func (x *SetAckRequest) Reset() {
 	*x = SetAckRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[49]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3023,7 +3337,7 @@ func (x *SetAckRequest) String() string {
 func (*SetAckRequest) ProtoMessage() {}
 
 func (x *SetAckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[49]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3036,7 +3350,7 @@ func (x *SetAckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetAckRequest.ProtoReflect.Descriptor instead.
 func (*SetAckRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{49}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *SetAckRequest) GetPolicyId() string {
@@ -3076,7 +3390,7 @@ type SetAckResponse struct {
 
 func (x *SetAckResponse) Reset() {
 	*x = SetAckResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[50]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3088,7 +3402,7 @@ func (x *SetAckResponse) String() string {
 func (*SetAckResponse) ProtoMessage() {}
 
 func (x *SetAckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[50]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3101,7 +3415,7 @@ func (x *SetAckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetAckResponse.ProtoReflect.Descriptor instead.
 func (*SetAckResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{50}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *SetAckResponse) GetPolicy() *Policy {
@@ -3120,7 +3434,7 @@ type ResolvePolicyObligationRequest struct {
 
 func (x *ResolvePolicyObligationRequest) Reset() {
 	*x = ResolvePolicyObligationRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[51]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3132,7 +3446,7 @@ func (x *ResolvePolicyObligationRequest) String() string {
 func (*ResolvePolicyObligationRequest) ProtoMessage() {}
 
 func (x *ResolvePolicyObligationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[51]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3145,7 +3459,7 @@ func (x *ResolvePolicyObligationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolvePolicyObligationRequest.ProtoReflect.Descriptor instead.
 func (*ResolvePolicyObligationRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{51}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ResolvePolicyObligationRequest) GetPolicyId() string {
@@ -3169,7 +3483,7 @@ type ResolvePolicyObligationResponse struct {
 
 func (x *ResolvePolicyObligationResponse) Reset() {
 	*x = ResolvePolicyObligationResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[52]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3181,7 +3495,7 @@ func (x *ResolvePolicyObligationResponse) String() string {
 func (*ResolvePolicyObligationResponse) ProtoMessage() {}
 
 func (x *ResolvePolicyObligationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[52]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3194,7 +3508,7 @@ func (x *ResolvePolicyObligationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolvePolicyObligationResponse.ProtoReflect.Descriptor instead.
 func (*ResolvePolicyObligationResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{52}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *ResolvePolicyObligationResponse) GetRequiresAck() bool {
@@ -3252,7 +3566,7 @@ type ObligatingPolicy struct {
 
 func (x *ObligatingPolicy) Reset() {
 	*x = ObligatingPolicy{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[53]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3264,7 +3578,7 @@ func (x *ObligatingPolicy) String() string {
 func (*ObligatingPolicy) ProtoMessage() {}
 
 func (x *ObligatingPolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[53]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3277,7 +3591,7 @@ func (x *ObligatingPolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObligatingPolicy.ProtoReflect.Descriptor instead.
 func (*ObligatingPolicy) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{53}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ObligatingPolicy) GetPolicyId() string {
@@ -3351,7 +3665,7 @@ type ListObligatingPoliciesRequest struct {
 
 func (x *ListObligatingPoliciesRequest) Reset() {
 	*x = ListObligatingPoliciesRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[54]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3363,7 +3677,7 @@ func (x *ListObligatingPoliciesRequest) String() string {
 func (*ListObligatingPoliciesRequest) ProtoMessage() {}
 
 func (x *ListObligatingPoliciesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[54]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3376,7 +3690,7 @@ func (x *ListObligatingPoliciesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListObligatingPoliciesRequest.ProtoReflect.Descriptor instead.
 func (*ListObligatingPoliciesRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{54}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{59}
 }
 
 type ListObligatingPoliciesResponse struct {
@@ -3388,7 +3702,7 @@ type ListObligatingPoliciesResponse struct {
 
 func (x *ListObligatingPoliciesResponse) Reset() {
 	*x = ListObligatingPoliciesResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[55]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3400,7 +3714,7 @@ func (x *ListObligatingPoliciesResponse) String() string {
 func (*ListObligatingPoliciesResponse) ProtoMessage() {}
 
 func (x *ListObligatingPoliciesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[55]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3413,7 +3727,7 @@ func (x *ListObligatingPoliciesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListObligatingPoliciesResponse.ProtoReflect.Descriptor instead.
 func (*ListObligatingPoliciesResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{55}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *ListObligatingPoliciesResponse) GetPolicies() []*ObligatingPolicy {
@@ -3436,7 +3750,7 @@ type ReindexPolicyRequest struct {
 
 func (x *ReindexPolicyRequest) Reset() {
 	*x = ReindexPolicyRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[56]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3448,7 +3762,7 @@ func (x *ReindexPolicyRequest) String() string {
 func (*ReindexPolicyRequest) ProtoMessage() {}
 
 func (x *ReindexPolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[56]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3461,7 +3775,7 @@ func (x *ReindexPolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReindexPolicyRequest.ProtoReflect.Descriptor instead.
 func (*ReindexPolicyRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{56}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ReindexPolicyRequest) GetPolicyId() string {
@@ -3489,7 +3803,7 @@ type ReindexPolicyResponse struct {
 
 func (x *ReindexPolicyResponse) Reset() {
 	*x = ReindexPolicyResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[57]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3501,7 +3815,7 @@ func (x *ReindexPolicyResponse) String() string {
 func (*ReindexPolicyResponse) ProtoMessage() {}
 
 func (x *ReindexPolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[57]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3514,7 +3828,7 @@ func (x *ReindexPolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReindexPolicyResponse.ProtoReflect.Descriptor instead.
 func (*ReindexPolicyResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{57}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *ReindexPolicyResponse) GetVersionId() string {
@@ -3550,7 +3864,7 @@ type ReindexPolicyVersionRequest struct {
 
 func (x *ReindexPolicyVersionRequest) Reset() {
 	*x = ReindexPolicyVersionRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[58]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3562,7 +3876,7 @@ func (x *ReindexPolicyVersionRequest) String() string {
 func (*ReindexPolicyVersionRequest) ProtoMessage() {}
 
 func (x *ReindexPolicyVersionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[58]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3575,7 +3889,7 @@ func (x *ReindexPolicyVersionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReindexPolicyVersionRequest.ProtoReflect.Descriptor instead.
 func (*ReindexPolicyVersionRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{58}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *ReindexPolicyVersionRequest) GetPolicyVersionId() string {
@@ -3603,7 +3917,7 @@ type ReindexPolicyVersionResponse struct {
 
 func (x *ReindexPolicyVersionResponse) Reset() {
 	*x = ReindexPolicyVersionResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[59]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3615,7 +3929,7 @@ func (x *ReindexPolicyVersionResponse) String() string {
 func (*ReindexPolicyVersionResponse) ProtoMessage() {}
 
 func (x *ReindexPolicyVersionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[59]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3628,7 +3942,7 @@ func (x *ReindexPolicyVersionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReindexPolicyVersionResponse.ProtoReflect.Descriptor instead.
 func (*ReindexPolicyVersionResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{59}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *ReindexPolicyVersionResponse) GetVersionId() string {
@@ -3663,7 +3977,7 @@ type ReindexAllPublishedRequest struct {
 
 func (x *ReindexAllPublishedRequest) Reset() {
 	*x = ReindexAllPublishedRequest{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[60]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3675,7 +3989,7 @@ func (x *ReindexAllPublishedRequest) String() string {
 func (*ReindexAllPublishedRequest) ProtoMessage() {}
 
 func (x *ReindexAllPublishedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[60]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3688,7 +4002,7 @@ func (x *ReindexAllPublishedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReindexAllPublishedRequest.ProtoReflect.Descriptor instead.
 func (*ReindexAllPublishedRequest) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{60}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *ReindexAllPublishedRequest) GetActorUserId() string {
@@ -3709,7 +4023,7 @@ type ReindexAllPublishedResponse struct {
 
 func (x *ReindexAllPublishedResponse) Reset() {
 	*x = ReindexAllPublishedResponse{}
-	mi := &file_steward_core_v1_policy_proto_msgTypes[61]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3721,7 +4035,7 @@ func (x *ReindexAllPublishedResponse) String() string {
 func (*ReindexAllPublishedResponse) ProtoMessage() {}
 
 func (x *ReindexAllPublishedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_core_v1_policy_proto_msgTypes[61]
+	mi := &file_steward_core_v1_policy_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3734,7 +4048,7 @@ func (x *ReindexAllPublishedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReindexAllPublishedResponse.ProtoReflect.Descriptor instead.
 func (*ReindexAllPublishedResponse) Descriptor() ([]byte, []int) {
-	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{61}
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *ReindexAllPublishedResponse) GetPoliciesReindexed() int32 {
@@ -3908,7 +4222,29 @@ const file_steward_core_v1_policy_proto_rawDesc = "" +
 	"\x10home_category_id\x18\x02 \x01(\tR\x0ehomeCategoryId\x12\"\n" +
 	"\ractor_user_id\x18\x03 \x01(\tR\vactorUserId\"E\n" +
 	"\x12MovePolicyResponse\x12/\n" +
-	"\x06policy\x18\x01 \x01(\v2\x17.steward.core.v1.PolicyR\x06policy\"a\n" +
+	"\x06policy\x18\x01 \x01(\v2\x17.steward.core.v1.PolicyR\x06policy\"\xb9\x01\n" +
+	"\x10MovePoliciesItem\x12\x1b\n" +
+	"\tpolicy_id\x18\x01 \x01(\tR\bpolicyId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
+	"\x06number\x18\x03 \x01(\tR\x06number\x12\x1d\n" +
+	"\n" +
+	"new_number\x18\x04 \x01(\tR\tnewNumber\x12!\n" +
+	"\frefusal_code\x18\x05 \x01(\tR\vrefusalCode\x12\x18\n" +
+	"\arefusal\x18\x06 \x01(\tR\arefusal\"\x89\x01\n" +
+	"\x1aPreviewMovePoliciesRequest\x12\x1d\n" +
+	"\n" +
+	"policy_ids\x18\x01 \x03(\tR\tpolicyIds\x12(\n" +
+	"\x10home_category_id\x18\x02 \x01(\tR\x0ehomeCategoryId\x12\"\n" +
+	"\ractor_user_id\x18\x03 \x01(\tR\vactorUserId\"V\n" +
+	"\x1bPreviewMovePoliciesResponse\x127\n" +
+	"\x05items\x18\x01 \x03(\v2!.steward.core.v1.MovePoliciesItemR\x05items\"\x82\x01\n" +
+	"\x13MovePoliciesRequest\x12\x1d\n" +
+	"\n" +
+	"policy_ids\x18\x01 \x03(\tR\tpolicyIds\x12(\n" +
+	"\x10home_category_id\x18\x02 \x01(\tR\x0ehomeCategoryId\x12\"\n" +
+	"\ractor_user_id\x18\x03 \x01(\tR\vactorUserId\"O\n" +
+	"\x14MovePoliciesResponse\x127\n" +
+	"\x05moved\x18\x01 \x03(\v2!.steward.core.v1.MovePoliciesItemR\x05moved\"a\n" +
 	"\x13DiffVersionsRequest\x12&\n" +
 	"\x0ffrom_version_id\x18\x01 \x01(\tR\rfromVersionId\x12\"\n" +
 	"\rto_version_id\x18\x02 \x01(\tR\vtoVersionId\"J\n" +
@@ -4003,13 +4339,15 @@ const file_steward_core_v1_policy_proto_rawDesc = "" +
 	"\x1bReindexAllPublishedResponse\x12-\n" +
 	"\x12policies_reindexed\x18\x01 \x01(\x05R\x11policiesReindexed\x12\x18\n" +
 	"\askipped\x18\x02 \x01(\x05R\askipped\x12\x1a\n" +
-	"\bfailures\x18\x03 \x01(\x05R\bfailures*\xcc\x01\n" +
+	"\bfailures\x18\x03 \x01(\x05R\bfailures*\x95\x02\n" +
 	"\x13PolicyVersionStatus\x12%\n" +
 	"!POLICY_VERSION_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bPOLICY_VERSION_STATUS_DRAFT\x10\x01\x12#\n" +
 	"\x1fPOLICY_VERSION_STATUS_PUBLISHED\x10\x02\x12$\n" +
 	" POLICY_VERSION_STATUS_SUPERSEDED\x10\x03\x12\"\n" +
-	"\x1ePOLICY_VERSION_STATUS_ARCHIVED\x10\x04*_\n" +
+	"\x1ePOLICY_VERSION_STATUS_ARCHIVED\x10\x04\x12#\n" +
+	"\x1fPOLICY_VERSION_STATUS_IN_REVIEW\x10\x05\x12\"\n" +
+	"\x1ePOLICY_VERSION_STATUS_REJECTED\x10\x06*_\n" +
 	"\vSensitivity\x12\x1b\n" +
 	"\x17SENSITIVITY_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14SENSITIVITY_STANDARD\x10\x01\x12\x19\n" +
@@ -4017,7 +4355,7 @@ const file_steward_core_v1_policy_proto_rawDesc = "" +
 	"\fDocumentType\x12\x1d\n" +
 	"\x19DOCUMENT_TYPE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14DOCUMENT_TYPE_POLICY\x10\x01\x12\x1b\n" +
-	"\x17DOCUMENT_TYPE_PROCEDURE\x10\x022\xb2\x17\n" +
+	"\x17DOCUMENT_TYPE_PROCEDURE\x10\x022\x81\x19\n" +
 	"\rPolicyService\x12[\n" +
 	"\fCreatePolicy\x12$.steward.core.v1.CreatePolicyRequest\x1a%.steward.core.v1.CreatePolicyResponse\x12R\n" +
 	"\tGetPolicy\x12!.steward.core.v1.GetPolicyRequest\x1a\".steward.core.v1.GetPolicyResponse\x12j\n" +
@@ -4036,7 +4374,9 @@ const file_steward_core_v1_policy_proto_rawDesc = "" +
 	"\x13ListPoliciesByOwner\x12+.steward.core.v1.ListPoliciesByOwnerRequest\x1a,.steward.core.v1.ListPoliciesByOwnerResponse\x12s\n" +
 	"\x14ReassignUserPolicies\x12,.steward.core.v1.ReassignUserPoliciesRequest\x1a-.steward.core.v1.ReassignUserPoliciesResponse\x12U\n" +
 	"\n" +
-	"MovePolicy\x12\".steward.core.v1.MovePolicyRequest\x1a#.steward.core.v1.MovePolicyResponse\x12[\n" +
+	"MovePolicy\x12\".steward.core.v1.MovePolicyRequest\x1a#.steward.core.v1.MovePolicyResponse\x12p\n" +
+	"\x13PreviewMovePolicies\x12+.steward.core.v1.PreviewMovePoliciesRequest\x1a,.steward.core.v1.PreviewMovePoliciesResponse\x12[\n" +
+	"\fMovePolicies\x12$.steward.core.v1.MovePoliciesRequest\x1a%.steward.core.v1.MovePoliciesResponse\x12[\n" +
 	"\fDiffVersions\x12$.steward.core.v1.DiffVersionsRequest\x1a%.steward.core.v1.DiffVersionsResponse\x12s\n" +
 	"\x14GetEffectiveTemplate\x12,.steward.core.v1.GetEffectiveTemplateRequest\x1a-.steward.core.v1.GetEffectiveTemplateResponse\x12j\n" +
 	"\x11SetPolicyTemplate\x12).steward.core.v1.SetPolicyTemplateRequest\x1a*.steward.core.v1.SetPolicyTemplateResponse\x12s\n" +
@@ -4063,7 +4403,7 @@ func file_steward_core_v1_policy_proto_rawDescGZIP() []byte {
 }
 
 var file_steward_core_v1_policy_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_steward_core_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 62)
+var file_steward_core_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 67)
 var file_steward_core_v1_policy_proto_goTypes = []any{
 	(PolicyVersionStatus)(0),                // 0: steward.core.v1.PolicyVersionStatus
 	(Sensitivity)(0),                        // 1: steward.core.v1.Sensitivity
@@ -4105,43 +4445,48 @@ var file_steward_core_v1_policy_proto_goTypes = []any{
 	(*ReassignUserPoliciesResponse)(nil),    // 37: steward.core.v1.ReassignUserPoliciesResponse
 	(*MovePolicyRequest)(nil),               // 38: steward.core.v1.MovePolicyRequest
 	(*MovePolicyResponse)(nil),              // 39: steward.core.v1.MovePolicyResponse
-	(*DiffVersionsRequest)(nil),             // 40: steward.core.v1.DiffVersionsRequest
-	(*DiffVersionsResponse)(nil),            // 41: steward.core.v1.DiffVersionsResponse
-	(*GetEffectiveTemplateRequest)(nil),     // 42: steward.core.v1.GetEffectiveTemplateRequest
-	(*GetEffectiveTemplateResponse)(nil),    // 43: steward.core.v1.GetEffectiveTemplateResponse
-	(*SetPolicyTemplateRequest)(nil),        // 44: steward.core.v1.SetPolicyTemplateRequest
-	(*SetPolicyTemplateResponse)(nil),       // 45: steward.core.v1.SetPolicyTemplateResponse
-	(*SetPolicySensitivityRequest)(nil),     // 46: steward.core.v1.SetPolicySensitivityRequest
-	(*SetPolicySensitivityResponse)(nil),    // 47: steward.core.v1.SetPolicySensitivityResponse
-	(*RenamePolicyRequest)(nil),             // 48: steward.core.v1.RenamePolicyRequest
-	(*RenamePolicyResponse)(nil),            // 49: steward.core.v1.RenamePolicyResponse
-	(*UpdateDraftContentRequest)(nil),       // 50: steward.core.v1.UpdateDraftContentRequest
-	(*UpdateDraftContentResponse)(nil),      // 51: steward.core.v1.UpdateDraftContentResponse
-	(*SetAckRequest)(nil),                   // 52: steward.core.v1.SetAckRequest
-	(*SetAckResponse)(nil),                  // 53: steward.core.v1.SetAckResponse
-	(*ResolvePolicyObligationRequest)(nil),  // 54: steward.core.v1.ResolvePolicyObligationRequest
-	(*ResolvePolicyObligationResponse)(nil), // 55: steward.core.v1.ResolvePolicyObligationResponse
-	(*ObligatingPolicy)(nil),                // 56: steward.core.v1.ObligatingPolicy
-	(*ListObligatingPoliciesRequest)(nil),   // 57: steward.core.v1.ListObligatingPoliciesRequest
-	(*ListObligatingPoliciesResponse)(nil),  // 58: steward.core.v1.ListObligatingPoliciesResponse
-	(*ReindexPolicyRequest)(nil),            // 59: steward.core.v1.ReindexPolicyRequest
-	(*ReindexPolicyResponse)(nil),           // 60: steward.core.v1.ReindexPolicyResponse
-	(*ReindexPolicyVersionRequest)(nil),     // 61: steward.core.v1.ReindexPolicyVersionRequest
-	(*ReindexPolicyVersionResponse)(nil),    // 62: steward.core.v1.ReindexPolicyVersionResponse
-	(*ReindexAllPublishedRequest)(nil),      // 63: steward.core.v1.ReindexAllPublishedRequest
-	(*ReindexAllPublishedResponse)(nil),     // 64: steward.core.v1.ReindexAllPublishedResponse
-	(AckTrigger)(0),                         // 65: steward.core.v1.AckTrigger
-	(*timestamppb.Timestamp)(nil),           // 66: google.protobuf.Timestamp
+	(*MovePoliciesItem)(nil),                // 40: steward.core.v1.MovePoliciesItem
+	(*PreviewMovePoliciesRequest)(nil),      // 41: steward.core.v1.PreviewMovePoliciesRequest
+	(*PreviewMovePoliciesResponse)(nil),     // 42: steward.core.v1.PreviewMovePoliciesResponse
+	(*MovePoliciesRequest)(nil),             // 43: steward.core.v1.MovePoliciesRequest
+	(*MovePoliciesResponse)(nil),            // 44: steward.core.v1.MovePoliciesResponse
+	(*DiffVersionsRequest)(nil),             // 45: steward.core.v1.DiffVersionsRequest
+	(*DiffVersionsResponse)(nil),            // 46: steward.core.v1.DiffVersionsResponse
+	(*GetEffectiveTemplateRequest)(nil),     // 47: steward.core.v1.GetEffectiveTemplateRequest
+	(*GetEffectiveTemplateResponse)(nil),    // 48: steward.core.v1.GetEffectiveTemplateResponse
+	(*SetPolicyTemplateRequest)(nil),        // 49: steward.core.v1.SetPolicyTemplateRequest
+	(*SetPolicyTemplateResponse)(nil),       // 50: steward.core.v1.SetPolicyTemplateResponse
+	(*SetPolicySensitivityRequest)(nil),     // 51: steward.core.v1.SetPolicySensitivityRequest
+	(*SetPolicySensitivityResponse)(nil),    // 52: steward.core.v1.SetPolicySensitivityResponse
+	(*RenamePolicyRequest)(nil),             // 53: steward.core.v1.RenamePolicyRequest
+	(*RenamePolicyResponse)(nil),            // 54: steward.core.v1.RenamePolicyResponse
+	(*UpdateDraftContentRequest)(nil),       // 55: steward.core.v1.UpdateDraftContentRequest
+	(*UpdateDraftContentResponse)(nil),      // 56: steward.core.v1.UpdateDraftContentResponse
+	(*SetAckRequest)(nil),                   // 57: steward.core.v1.SetAckRequest
+	(*SetAckResponse)(nil),                  // 58: steward.core.v1.SetAckResponse
+	(*ResolvePolicyObligationRequest)(nil),  // 59: steward.core.v1.ResolvePolicyObligationRequest
+	(*ResolvePolicyObligationResponse)(nil), // 60: steward.core.v1.ResolvePolicyObligationResponse
+	(*ObligatingPolicy)(nil),                // 61: steward.core.v1.ObligatingPolicy
+	(*ListObligatingPoliciesRequest)(nil),   // 62: steward.core.v1.ListObligatingPoliciesRequest
+	(*ListObligatingPoliciesResponse)(nil),  // 63: steward.core.v1.ListObligatingPoliciesResponse
+	(*ReindexPolicyRequest)(nil),            // 64: steward.core.v1.ReindexPolicyRequest
+	(*ReindexPolicyResponse)(nil),           // 65: steward.core.v1.ReindexPolicyResponse
+	(*ReindexPolicyVersionRequest)(nil),     // 66: steward.core.v1.ReindexPolicyVersionRequest
+	(*ReindexPolicyVersionResponse)(nil),    // 67: steward.core.v1.ReindexPolicyVersionResponse
+	(*ReindexAllPublishedRequest)(nil),      // 68: steward.core.v1.ReindexAllPublishedRequest
+	(*ReindexAllPublishedResponse)(nil),     // 69: steward.core.v1.ReindexAllPublishedResponse
+	(AckTrigger)(0),                         // 70: steward.core.v1.AckTrigger
+	(*timestamppb.Timestamp)(nil),           // 71: google.protobuf.Timestamp
 }
 var file_steward_core_v1_policy_proto_depIdxs = []int32{
 	1,  // 0: steward.core.v1.Policy.sensitivity:type_name -> steward.core.v1.Sensitivity
-	65, // 1: steward.core.v1.Policy.ack_triggers:type_name -> steward.core.v1.AckTrigger
+	70, // 1: steward.core.v1.Policy.ack_triggers:type_name -> steward.core.v1.AckTrigger
 	2,  // 2: steward.core.v1.Policy.document_type:type_name -> steward.core.v1.DocumentType
-	66, // 3: steward.core.v1.Policy.updated_at:type_name -> google.protobuf.Timestamp
+	71, // 3: steward.core.v1.Policy.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 4: steward.core.v1.Policy.current_version_status:type_name -> steward.core.v1.PolicyVersionStatus
 	0,  // 5: steward.core.v1.PolicyVersion.status:type_name -> steward.core.v1.PolicyVersionStatus
-	66, // 6: steward.core.v1.PolicyVersion.created_at:type_name -> google.protobuf.Timestamp
-	66, // 7: steward.core.v1.PolicyVersion.published_at:type_name -> google.protobuf.Timestamp
+	71, // 6: steward.core.v1.PolicyVersion.created_at:type_name -> google.protobuf.Timestamp
+	71, // 7: steward.core.v1.PolicyVersion.published_at:type_name -> google.protobuf.Timestamp
 	1,  // 8: steward.core.v1.CreatePolicyRequest.sensitivity:type_name -> steward.core.v1.Sensitivity
 	2,  // 9: steward.core.v1.CreatePolicyRequest.document_type:type_name -> steward.core.v1.DocumentType
 	3,  // 10: steward.core.v1.CreatePolicyResponse.policy:type_name -> steward.core.v1.Policy
@@ -4158,78 +4503,84 @@ var file_steward_core_v1_policy_proto_depIdxs = []int32{
 	3,  // 21: steward.core.v1.SetPolicyOwnerResponse.policy:type_name -> steward.core.v1.Policy
 	3,  // 22: steward.core.v1.ListPoliciesByOwnerResponse.policies:type_name -> steward.core.v1.Policy
 	3,  // 23: steward.core.v1.MovePolicyResponse.policy:type_name -> steward.core.v1.Policy
-	5,  // 24: steward.core.v1.DiffVersionsResponse.diffs:type_name -> steward.core.v1.SectionDiff
-	3,  // 25: steward.core.v1.SetPolicyTemplateResponse.policy:type_name -> steward.core.v1.Policy
-	1,  // 26: steward.core.v1.SetPolicySensitivityRequest.sensitivity:type_name -> steward.core.v1.Sensitivity
-	3,  // 27: steward.core.v1.SetPolicySensitivityResponse.policy:type_name -> steward.core.v1.Policy
-	3,  // 28: steward.core.v1.RenamePolicyResponse.policy:type_name -> steward.core.v1.Policy
-	65, // 29: steward.core.v1.SetAckRequest.ack_triggers:type_name -> steward.core.v1.AckTrigger
-	3,  // 30: steward.core.v1.SetAckResponse.policy:type_name -> steward.core.v1.Policy
-	2,  // 31: steward.core.v1.ObligatingPolicy.document_type:type_name -> steward.core.v1.DocumentType
-	56, // 32: steward.core.v1.ListObligatingPoliciesResponse.policies:type_name -> steward.core.v1.ObligatingPolicy
-	6,  // 33: steward.core.v1.PolicyService.CreatePolicy:input_type -> steward.core.v1.CreatePolicyRequest
-	8,  // 34: steward.core.v1.PolicyService.GetPolicy:input_type -> steward.core.v1.GetPolicyRequest
-	10, // 35: steward.core.v1.PolicyService.GetPolicyByNumber:input_type -> steward.core.v1.GetPolicyByNumberRequest
-	12, // 36: steward.core.v1.PolicyService.ListPolicies:input_type -> steward.core.v1.ListPoliciesRequest
-	14, // 37: steward.core.v1.PolicyService.GetPolicyVersion:input_type -> steward.core.v1.GetPolicyVersionRequest
-	16, // 38: steward.core.v1.PolicyService.ListPolicyVersions:input_type -> steward.core.v1.ListPolicyVersionsRequest
-	18, // 39: steward.core.v1.PolicyService.SaveDraft:input_type -> steward.core.v1.SaveDraftRequest
-	20, // 40: steward.core.v1.PolicyService.PublishDraft:input_type -> steward.core.v1.PublishDraftRequest
-	22, // 41: steward.core.v1.PolicyService.DiscardDraft:input_type -> steward.core.v1.DiscardDraftRequest
-	24, // 42: steward.core.v1.PolicyService.DeletePolicy:input_type -> steward.core.v1.DeletePolicyRequest
-	26, // 43: steward.core.v1.PolicyService.RetirePolicy:input_type -> steward.core.v1.RetirePolicyRequest
-	28, // 44: steward.core.v1.PolicyService.RecordBreakGlassRead:input_type -> steward.core.v1.RecordBreakGlassReadRequest
-	30, // 45: steward.core.v1.PolicyService.SetVersionStatus:input_type -> steward.core.v1.SetVersionStatusRequest
-	32, // 46: steward.core.v1.PolicyService.SetPolicyOwner:input_type -> steward.core.v1.SetPolicyOwnerRequest
-	34, // 47: steward.core.v1.PolicyService.ListPoliciesByOwner:input_type -> steward.core.v1.ListPoliciesByOwnerRequest
-	36, // 48: steward.core.v1.PolicyService.ReassignUserPolicies:input_type -> steward.core.v1.ReassignUserPoliciesRequest
-	38, // 49: steward.core.v1.PolicyService.MovePolicy:input_type -> steward.core.v1.MovePolicyRequest
-	40, // 50: steward.core.v1.PolicyService.DiffVersions:input_type -> steward.core.v1.DiffVersionsRequest
-	42, // 51: steward.core.v1.PolicyService.GetEffectiveTemplate:input_type -> steward.core.v1.GetEffectiveTemplateRequest
-	44, // 52: steward.core.v1.PolicyService.SetPolicyTemplate:input_type -> steward.core.v1.SetPolicyTemplateRequest
-	46, // 53: steward.core.v1.PolicyService.SetPolicySensitivity:input_type -> steward.core.v1.SetPolicySensitivityRequest
-	48, // 54: steward.core.v1.PolicyService.RenamePolicy:input_type -> steward.core.v1.RenamePolicyRequest
-	50, // 55: steward.core.v1.PolicyService.UpdateDraftContent:input_type -> steward.core.v1.UpdateDraftContentRequest
-	52, // 56: steward.core.v1.PolicyService.SetAck:input_type -> steward.core.v1.SetAckRequest
-	54, // 57: steward.core.v1.PolicyService.ResolvePolicyObligation:input_type -> steward.core.v1.ResolvePolicyObligationRequest
-	57, // 58: steward.core.v1.PolicyService.ListObligatingPolicies:input_type -> steward.core.v1.ListObligatingPoliciesRequest
-	59, // 59: steward.core.v1.PolicyService.ReindexPolicy:input_type -> steward.core.v1.ReindexPolicyRequest
-	61, // 60: steward.core.v1.PolicyService.ReindexPolicyVersion:input_type -> steward.core.v1.ReindexPolicyVersionRequest
-	63, // 61: steward.core.v1.PolicyService.ReindexAllPublished:input_type -> steward.core.v1.ReindexAllPublishedRequest
-	7,  // 62: steward.core.v1.PolicyService.CreatePolicy:output_type -> steward.core.v1.CreatePolicyResponse
-	9,  // 63: steward.core.v1.PolicyService.GetPolicy:output_type -> steward.core.v1.GetPolicyResponse
-	11, // 64: steward.core.v1.PolicyService.GetPolicyByNumber:output_type -> steward.core.v1.GetPolicyByNumberResponse
-	13, // 65: steward.core.v1.PolicyService.ListPolicies:output_type -> steward.core.v1.ListPoliciesResponse
-	15, // 66: steward.core.v1.PolicyService.GetPolicyVersion:output_type -> steward.core.v1.GetPolicyVersionResponse
-	17, // 67: steward.core.v1.PolicyService.ListPolicyVersions:output_type -> steward.core.v1.ListPolicyVersionsResponse
-	19, // 68: steward.core.v1.PolicyService.SaveDraft:output_type -> steward.core.v1.SaveDraftResponse
-	21, // 69: steward.core.v1.PolicyService.PublishDraft:output_type -> steward.core.v1.PublishDraftResponse
-	23, // 70: steward.core.v1.PolicyService.DiscardDraft:output_type -> steward.core.v1.DiscardDraftResponse
-	25, // 71: steward.core.v1.PolicyService.DeletePolicy:output_type -> steward.core.v1.DeletePolicyResponse
-	27, // 72: steward.core.v1.PolicyService.RetirePolicy:output_type -> steward.core.v1.RetirePolicyResponse
-	29, // 73: steward.core.v1.PolicyService.RecordBreakGlassRead:output_type -> steward.core.v1.RecordBreakGlassReadResponse
-	31, // 74: steward.core.v1.PolicyService.SetVersionStatus:output_type -> steward.core.v1.SetVersionStatusResponse
-	33, // 75: steward.core.v1.PolicyService.SetPolicyOwner:output_type -> steward.core.v1.SetPolicyOwnerResponse
-	35, // 76: steward.core.v1.PolicyService.ListPoliciesByOwner:output_type -> steward.core.v1.ListPoliciesByOwnerResponse
-	37, // 77: steward.core.v1.PolicyService.ReassignUserPolicies:output_type -> steward.core.v1.ReassignUserPoliciesResponse
-	39, // 78: steward.core.v1.PolicyService.MovePolicy:output_type -> steward.core.v1.MovePolicyResponse
-	41, // 79: steward.core.v1.PolicyService.DiffVersions:output_type -> steward.core.v1.DiffVersionsResponse
-	43, // 80: steward.core.v1.PolicyService.GetEffectiveTemplate:output_type -> steward.core.v1.GetEffectiveTemplateResponse
-	45, // 81: steward.core.v1.PolicyService.SetPolicyTemplate:output_type -> steward.core.v1.SetPolicyTemplateResponse
-	47, // 82: steward.core.v1.PolicyService.SetPolicySensitivity:output_type -> steward.core.v1.SetPolicySensitivityResponse
-	49, // 83: steward.core.v1.PolicyService.RenamePolicy:output_type -> steward.core.v1.RenamePolicyResponse
-	51, // 84: steward.core.v1.PolicyService.UpdateDraftContent:output_type -> steward.core.v1.UpdateDraftContentResponse
-	53, // 85: steward.core.v1.PolicyService.SetAck:output_type -> steward.core.v1.SetAckResponse
-	55, // 86: steward.core.v1.PolicyService.ResolvePolicyObligation:output_type -> steward.core.v1.ResolvePolicyObligationResponse
-	58, // 87: steward.core.v1.PolicyService.ListObligatingPolicies:output_type -> steward.core.v1.ListObligatingPoliciesResponse
-	60, // 88: steward.core.v1.PolicyService.ReindexPolicy:output_type -> steward.core.v1.ReindexPolicyResponse
-	62, // 89: steward.core.v1.PolicyService.ReindexPolicyVersion:output_type -> steward.core.v1.ReindexPolicyVersionResponse
-	64, // 90: steward.core.v1.PolicyService.ReindexAllPublished:output_type -> steward.core.v1.ReindexAllPublishedResponse
-	62, // [62:91] is the sub-list for method output_type
-	33, // [33:62] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	40, // 24: steward.core.v1.PreviewMovePoliciesResponse.items:type_name -> steward.core.v1.MovePoliciesItem
+	40, // 25: steward.core.v1.MovePoliciesResponse.moved:type_name -> steward.core.v1.MovePoliciesItem
+	5,  // 26: steward.core.v1.DiffVersionsResponse.diffs:type_name -> steward.core.v1.SectionDiff
+	3,  // 27: steward.core.v1.SetPolicyTemplateResponse.policy:type_name -> steward.core.v1.Policy
+	1,  // 28: steward.core.v1.SetPolicySensitivityRequest.sensitivity:type_name -> steward.core.v1.Sensitivity
+	3,  // 29: steward.core.v1.SetPolicySensitivityResponse.policy:type_name -> steward.core.v1.Policy
+	3,  // 30: steward.core.v1.RenamePolicyResponse.policy:type_name -> steward.core.v1.Policy
+	70, // 31: steward.core.v1.SetAckRequest.ack_triggers:type_name -> steward.core.v1.AckTrigger
+	3,  // 32: steward.core.v1.SetAckResponse.policy:type_name -> steward.core.v1.Policy
+	2,  // 33: steward.core.v1.ObligatingPolicy.document_type:type_name -> steward.core.v1.DocumentType
+	61, // 34: steward.core.v1.ListObligatingPoliciesResponse.policies:type_name -> steward.core.v1.ObligatingPolicy
+	6,  // 35: steward.core.v1.PolicyService.CreatePolicy:input_type -> steward.core.v1.CreatePolicyRequest
+	8,  // 36: steward.core.v1.PolicyService.GetPolicy:input_type -> steward.core.v1.GetPolicyRequest
+	10, // 37: steward.core.v1.PolicyService.GetPolicyByNumber:input_type -> steward.core.v1.GetPolicyByNumberRequest
+	12, // 38: steward.core.v1.PolicyService.ListPolicies:input_type -> steward.core.v1.ListPoliciesRequest
+	14, // 39: steward.core.v1.PolicyService.GetPolicyVersion:input_type -> steward.core.v1.GetPolicyVersionRequest
+	16, // 40: steward.core.v1.PolicyService.ListPolicyVersions:input_type -> steward.core.v1.ListPolicyVersionsRequest
+	18, // 41: steward.core.v1.PolicyService.SaveDraft:input_type -> steward.core.v1.SaveDraftRequest
+	20, // 42: steward.core.v1.PolicyService.PublishDraft:input_type -> steward.core.v1.PublishDraftRequest
+	22, // 43: steward.core.v1.PolicyService.DiscardDraft:input_type -> steward.core.v1.DiscardDraftRequest
+	24, // 44: steward.core.v1.PolicyService.DeletePolicy:input_type -> steward.core.v1.DeletePolicyRequest
+	26, // 45: steward.core.v1.PolicyService.RetirePolicy:input_type -> steward.core.v1.RetirePolicyRequest
+	28, // 46: steward.core.v1.PolicyService.RecordBreakGlassRead:input_type -> steward.core.v1.RecordBreakGlassReadRequest
+	30, // 47: steward.core.v1.PolicyService.SetVersionStatus:input_type -> steward.core.v1.SetVersionStatusRequest
+	32, // 48: steward.core.v1.PolicyService.SetPolicyOwner:input_type -> steward.core.v1.SetPolicyOwnerRequest
+	34, // 49: steward.core.v1.PolicyService.ListPoliciesByOwner:input_type -> steward.core.v1.ListPoliciesByOwnerRequest
+	36, // 50: steward.core.v1.PolicyService.ReassignUserPolicies:input_type -> steward.core.v1.ReassignUserPoliciesRequest
+	38, // 51: steward.core.v1.PolicyService.MovePolicy:input_type -> steward.core.v1.MovePolicyRequest
+	41, // 52: steward.core.v1.PolicyService.PreviewMovePolicies:input_type -> steward.core.v1.PreviewMovePoliciesRequest
+	43, // 53: steward.core.v1.PolicyService.MovePolicies:input_type -> steward.core.v1.MovePoliciesRequest
+	45, // 54: steward.core.v1.PolicyService.DiffVersions:input_type -> steward.core.v1.DiffVersionsRequest
+	47, // 55: steward.core.v1.PolicyService.GetEffectiveTemplate:input_type -> steward.core.v1.GetEffectiveTemplateRequest
+	49, // 56: steward.core.v1.PolicyService.SetPolicyTemplate:input_type -> steward.core.v1.SetPolicyTemplateRequest
+	51, // 57: steward.core.v1.PolicyService.SetPolicySensitivity:input_type -> steward.core.v1.SetPolicySensitivityRequest
+	53, // 58: steward.core.v1.PolicyService.RenamePolicy:input_type -> steward.core.v1.RenamePolicyRequest
+	55, // 59: steward.core.v1.PolicyService.UpdateDraftContent:input_type -> steward.core.v1.UpdateDraftContentRequest
+	57, // 60: steward.core.v1.PolicyService.SetAck:input_type -> steward.core.v1.SetAckRequest
+	59, // 61: steward.core.v1.PolicyService.ResolvePolicyObligation:input_type -> steward.core.v1.ResolvePolicyObligationRequest
+	62, // 62: steward.core.v1.PolicyService.ListObligatingPolicies:input_type -> steward.core.v1.ListObligatingPoliciesRequest
+	64, // 63: steward.core.v1.PolicyService.ReindexPolicy:input_type -> steward.core.v1.ReindexPolicyRequest
+	66, // 64: steward.core.v1.PolicyService.ReindexPolicyVersion:input_type -> steward.core.v1.ReindexPolicyVersionRequest
+	68, // 65: steward.core.v1.PolicyService.ReindexAllPublished:input_type -> steward.core.v1.ReindexAllPublishedRequest
+	7,  // 66: steward.core.v1.PolicyService.CreatePolicy:output_type -> steward.core.v1.CreatePolicyResponse
+	9,  // 67: steward.core.v1.PolicyService.GetPolicy:output_type -> steward.core.v1.GetPolicyResponse
+	11, // 68: steward.core.v1.PolicyService.GetPolicyByNumber:output_type -> steward.core.v1.GetPolicyByNumberResponse
+	13, // 69: steward.core.v1.PolicyService.ListPolicies:output_type -> steward.core.v1.ListPoliciesResponse
+	15, // 70: steward.core.v1.PolicyService.GetPolicyVersion:output_type -> steward.core.v1.GetPolicyVersionResponse
+	17, // 71: steward.core.v1.PolicyService.ListPolicyVersions:output_type -> steward.core.v1.ListPolicyVersionsResponse
+	19, // 72: steward.core.v1.PolicyService.SaveDraft:output_type -> steward.core.v1.SaveDraftResponse
+	21, // 73: steward.core.v1.PolicyService.PublishDraft:output_type -> steward.core.v1.PublishDraftResponse
+	23, // 74: steward.core.v1.PolicyService.DiscardDraft:output_type -> steward.core.v1.DiscardDraftResponse
+	25, // 75: steward.core.v1.PolicyService.DeletePolicy:output_type -> steward.core.v1.DeletePolicyResponse
+	27, // 76: steward.core.v1.PolicyService.RetirePolicy:output_type -> steward.core.v1.RetirePolicyResponse
+	29, // 77: steward.core.v1.PolicyService.RecordBreakGlassRead:output_type -> steward.core.v1.RecordBreakGlassReadResponse
+	31, // 78: steward.core.v1.PolicyService.SetVersionStatus:output_type -> steward.core.v1.SetVersionStatusResponse
+	33, // 79: steward.core.v1.PolicyService.SetPolicyOwner:output_type -> steward.core.v1.SetPolicyOwnerResponse
+	35, // 80: steward.core.v1.PolicyService.ListPoliciesByOwner:output_type -> steward.core.v1.ListPoliciesByOwnerResponse
+	37, // 81: steward.core.v1.PolicyService.ReassignUserPolicies:output_type -> steward.core.v1.ReassignUserPoliciesResponse
+	39, // 82: steward.core.v1.PolicyService.MovePolicy:output_type -> steward.core.v1.MovePolicyResponse
+	42, // 83: steward.core.v1.PolicyService.PreviewMovePolicies:output_type -> steward.core.v1.PreviewMovePoliciesResponse
+	44, // 84: steward.core.v1.PolicyService.MovePolicies:output_type -> steward.core.v1.MovePoliciesResponse
+	46, // 85: steward.core.v1.PolicyService.DiffVersions:output_type -> steward.core.v1.DiffVersionsResponse
+	48, // 86: steward.core.v1.PolicyService.GetEffectiveTemplate:output_type -> steward.core.v1.GetEffectiveTemplateResponse
+	50, // 87: steward.core.v1.PolicyService.SetPolicyTemplate:output_type -> steward.core.v1.SetPolicyTemplateResponse
+	52, // 88: steward.core.v1.PolicyService.SetPolicySensitivity:output_type -> steward.core.v1.SetPolicySensitivityResponse
+	54, // 89: steward.core.v1.PolicyService.RenamePolicy:output_type -> steward.core.v1.RenamePolicyResponse
+	56, // 90: steward.core.v1.PolicyService.UpdateDraftContent:output_type -> steward.core.v1.UpdateDraftContentResponse
+	58, // 91: steward.core.v1.PolicyService.SetAck:output_type -> steward.core.v1.SetAckResponse
+	60, // 92: steward.core.v1.PolicyService.ResolvePolicyObligation:output_type -> steward.core.v1.ResolvePolicyObligationResponse
+	63, // 93: steward.core.v1.PolicyService.ListObligatingPolicies:output_type -> steward.core.v1.ListObligatingPoliciesResponse
+	65, // 94: steward.core.v1.PolicyService.ReindexPolicy:output_type -> steward.core.v1.ReindexPolicyResponse
+	67, // 95: steward.core.v1.PolicyService.ReindexPolicyVersion:output_type -> steward.core.v1.ReindexPolicyVersionResponse
+	69, // 96: steward.core.v1.PolicyService.ReindexAllPublished:output_type -> steward.core.v1.ReindexAllPublishedResponse
+	66, // [66:97] is the sub-list for method output_type
+	35, // [35:66] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_steward_core_v1_policy_proto_init() }
@@ -4244,7 +4595,7 @@ func file_steward_core_v1_policy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_steward_core_v1_policy_proto_rawDesc), len(file_steward_core_v1_policy_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   62,
+			NumMessages:   67,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
