@@ -28,6 +28,22 @@ var (
 	ErrUnavailable = errors.New("access: a peer service is unavailable")
 )
 
+// ErrAppendixNotFound means core has no such appendix.
+var ErrAppendixNotFound = errors.New("access: appendix not found")
+
+// AppendixInfo is what the appendix token needs of an appendix: the policy it
+// belongs to, to run the edit check against, and whether it is retired.
+type AppendixInfo struct {
+	PolicyID string
+	Retired  bool
+}
+
+// AppendixReader looks an appendix up in core. It returns ErrAppendixNotFound
+// for an unknown id and an error wrapping ErrUnavailable when core can't answer.
+type AppendixReader interface {
+	GetAppendix(ctx context.Context, id string) (AppendixInfo, error)
+}
+
 // maxDepth bounds the walk up the category tree. Core keeps the tree three
 // levels deep; the bound only stops a corrupt parent loop.
 const maxDepth = 16

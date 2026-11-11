@@ -151,6 +151,134 @@ func (x *IssueTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
 	return nil
 }
 
+type IssueAppendixTokenRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required. The appendix to co-edit. Its policy comes from core, so a
+	// caller cannot pair an appendix with a policy it may edit instead.
+	AppendixId    string `protobuf:"bytes,1,opt,name=appendix_id,json=appendixId,proto3" json:"appendix_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IssueAppendixTokenRequest) Reset() {
+	*x = IssueAppendixTokenRequest{}
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueAppendixTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueAppendixTokenRequest) ProtoMessage() {}
+
+func (x *IssueAppendixTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IssueAppendixTokenRequest.ProtoReflect.Descriptor instead.
+func (*IssueAppendixTokenRequest) Descriptor() ([]byte, []int) {
+	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *IssueAppendixTokenRequest) GetAppendixId() string {
+	if x != nil {
+		return x.AppendixId
+	}
+	return ""
+}
+
+type IssueAppendixTokenResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Token string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	// The websocket path, relative to the gateway origin unless the deployment
+	// sets an explicit base: "/collab/ws/appendix%3A<appendix_id>".
+	WsUrl     string                 `protobuf:"bytes,2,opt,name=ws_url,json=wsUrl,proto3" json:"ws_url,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// The room key, "appendix:<appendix_id>". It is the draft_id to pass to
+	// CollabRoomService.FlushDraft and NotifyDraftPublished for this room.
+	RoomKey string `protobuf:"bytes,4,opt,name=room_key,json=roomKey,proto3" json:"room_key,omitempty"`
+	// The appendix's policy, as core reports it. FlushDraft and
+	// NotifyDraftPublished need it as policy_id.
+	PolicyId      string `protobuf:"bytes,5,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IssueAppendixTokenResponse) Reset() {
+	*x = IssueAppendixTokenResponse{}
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueAppendixTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueAppendixTokenResponse) ProtoMessage() {}
+
+func (x *IssueAppendixTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IssueAppendixTokenResponse.ProtoReflect.Descriptor instead.
+func (*IssueAppendixTokenResponse) Descriptor() ([]byte, []int) {
+	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *IssueAppendixTokenResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *IssueAppendixTokenResponse) GetWsUrl() string {
+	if x != nil {
+		return x.WsUrl
+	}
+	return ""
+}
+
+func (x *IssueAppendixTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *IssueAppendixTokenResponse) GetRoomKey() string {
+	if x != nil {
+		return x.RoomKey
+	}
+	return ""
+}
+
+func (x *IssueAppendixTokenResponse) GetPolicyId() string {
+	if x != nil {
+		return x.PolicyId
+	}
+	return ""
+}
+
 type FlushDraftRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Required. The draft the room is keyed by.
@@ -163,7 +291,7 @@ type FlushDraftRequest struct {
 
 func (x *FlushDraftRequest) Reset() {
 	*x = FlushDraftRequest{}
-	mi := &file_steward_collab_v1_collab_proto_msgTypes[2]
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -175,7 +303,7 @@ func (x *FlushDraftRequest) String() string {
 func (*FlushDraftRequest) ProtoMessage() {}
 
 func (x *FlushDraftRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_collab_v1_collab_proto_msgTypes[2]
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -188,7 +316,7 @@ func (x *FlushDraftRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlushDraftRequest.ProtoReflect.Descriptor instead.
 func (*FlushDraftRequest) Descriptor() ([]byte, []int) {
-	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{2}
+	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *FlushDraftRequest) GetDraftId() string {
@@ -220,7 +348,7 @@ type FlushDraftResponse struct {
 
 func (x *FlushDraftResponse) Reset() {
 	*x = FlushDraftResponse{}
-	mi := &file_steward_collab_v1_collab_proto_msgTypes[3]
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +360,7 @@ func (x *FlushDraftResponse) String() string {
 func (*FlushDraftResponse) ProtoMessage() {}
 
 func (x *FlushDraftResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_collab_v1_collab_proto_msgTypes[3]
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,7 +373,7 @@ func (x *FlushDraftResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlushDraftResponse.ProtoReflect.Descriptor instead.
 func (*FlushDraftResponse) Descriptor() ([]byte, []int) {
-	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{3}
+	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *FlushDraftResponse) GetRoomFound() bool {
@@ -277,7 +405,7 @@ type NotifyDraftPublishedRequest struct {
 
 func (x *NotifyDraftPublishedRequest) Reset() {
 	*x = NotifyDraftPublishedRequest{}
-	mi := &file_steward_collab_v1_collab_proto_msgTypes[4]
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -289,7 +417,7 @@ func (x *NotifyDraftPublishedRequest) String() string {
 func (*NotifyDraftPublishedRequest) ProtoMessage() {}
 
 func (x *NotifyDraftPublishedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_collab_v1_collab_proto_msgTypes[4]
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -302,7 +430,7 @@ func (x *NotifyDraftPublishedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotifyDraftPublishedRequest.ProtoReflect.Descriptor instead.
 func (*NotifyDraftPublishedRequest) Descriptor() ([]byte, []int) {
-	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{4}
+	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *NotifyDraftPublishedRequest) GetDraftId() string {
@@ -336,7 +464,7 @@ type NotifyDraftPublishedResponse struct {
 
 func (x *NotifyDraftPublishedResponse) Reset() {
 	*x = NotifyDraftPublishedResponse{}
-	mi := &file_steward_collab_v1_collab_proto_msgTypes[5]
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -348,7 +476,7 @@ func (x *NotifyDraftPublishedResponse) String() string {
 func (*NotifyDraftPublishedResponse) ProtoMessage() {}
 
 func (x *NotifyDraftPublishedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_steward_collab_v1_collab_proto_msgTypes[5]
+	mi := &file_steward_collab_v1_collab_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,7 +489,7 @@ func (x *NotifyDraftPublishedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotifyDraftPublishedResponse.ProtoReflect.Descriptor instead.
 func (*NotifyDraftPublishedResponse) Descriptor() ([]byte, []int) {
-	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{5}
+	return file_steward_collab_v1_collab_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *NotifyDraftPublishedResponse) GetRoomNotified() bool {
@@ -384,7 +512,17 @@ const file_steward_collab_v1_collab_proto_rawDesc = "" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x15\n" +
 	"\x06ws_url\x18\x02 \x01(\tR\x05wsUrl\x129\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"K\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"<\n" +
+	"\x19IssueAppendixTokenRequest\x12\x1f\n" +
+	"\vappendix_id\x18\x01 \x01(\tR\n" +
+	"appendixId\"\xbc\x01\n" +
+	"\x1aIssueAppendixTokenResponse\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\x12\x15\n" +
+	"\x06ws_url\x18\x02 \x01(\tR\x05wsUrl\x129\n" +
+	"\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x19\n" +
+	"\broom_key\x18\x04 \x01(\tR\aroomKey\x12\x1b\n" +
+	"\tpolicy_id\x18\x05 \x01(\tR\bpolicyId\"K\n" +
 	"\x11FlushDraftRequest\x12\x19\n" +
 	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12\x1b\n" +
 	"\tpolicy_id\x18\x02 \x01(\tR\bpolicyId\"\\\n" +
@@ -397,10 +535,11 @@ const file_steward_collab_v1_collab_proto_rawDesc = "" +
 	"\tpolicy_id\x18\x02 \x01(\tR\bpolicyId\x12%\n" +
 	"\x0eversion_number\x18\x03 \x01(\x05R\rversionNumber\"C\n" +
 	"\x1cNotifyDraftPublishedResponse\x12#\n" +
-	"\rroom_notified\x18\x01 \x01(\bR\froomNotified2o\n" +
+	"\rroom_notified\x18\x01 \x01(\bR\froomNotified2\xe2\x01\n" +
 	"\x12CollabTokenService\x12Y\n" +
 	"\n" +
-	"IssueToken\x12$.steward.collab.v1.IssueTokenRequest\x1a%.steward.collab.v1.IssueTokenResponse2\xe7\x01\n" +
+	"IssueToken\x12$.steward.collab.v1.IssueTokenRequest\x1a%.steward.collab.v1.IssueTokenResponse\x12q\n" +
+	"\x12IssueAppendixToken\x12,.steward.collab.v1.IssueAppendixTokenRequest\x1a-.steward.collab.v1.IssueAppendixTokenResponse2\xe7\x01\n" +
 	"\x11CollabRoomService\x12Y\n" +
 	"\n" +
 	"FlushDraft\x12$.steward.collab.v1.FlushDraftRequest\x1a%.steward.collab.v1.FlushDraftResponse\x12w\n" +
@@ -418,29 +557,34 @@ func file_steward_collab_v1_collab_proto_rawDescGZIP() []byte {
 	return file_steward_collab_v1_collab_proto_rawDescData
 }
 
-var file_steward_collab_v1_collab_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_steward_collab_v1_collab_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_steward_collab_v1_collab_proto_goTypes = []any{
 	(*IssueTokenRequest)(nil),            // 0: steward.collab.v1.IssueTokenRequest
 	(*IssueTokenResponse)(nil),           // 1: steward.collab.v1.IssueTokenResponse
-	(*FlushDraftRequest)(nil),            // 2: steward.collab.v1.FlushDraftRequest
-	(*FlushDraftResponse)(nil),           // 3: steward.collab.v1.FlushDraftResponse
-	(*NotifyDraftPublishedRequest)(nil),  // 4: steward.collab.v1.NotifyDraftPublishedRequest
-	(*NotifyDraftPublishedResponse)(nil), // 5: steward.collab.v1.NotifyDraftPublishedResponse
-	(*timestamppb.Timestamp)(nil),        // 6: google.protobuf.Timestamp
+	(*IssueAppendixTokenRequest)(nil),    // 2: steward.collab.v1.IssueAppendixTokenRequest
+	(*IssueAppendixTokenResponse)(nil),   // 3: steward.collab.v1.IssueAppendixTokenResponse
+	(*FlushDraftRequest)(nil),            // 4: steward.collab.v1.FlushDraftRequest
+	(*FlushDraftResponse)(nil),           // 5: steward.collab.v1.FlushDraftResponse
+	(*NotifyDraftPublishedRequest)(nil),  // 6: steward.collab.v1.NotifyDraftPublishedRequest
+	(*NotifyDraftPublishedResponse)(nil), // 7: steward.collab.v1.NotifyDraftPublishedResponse
+	(*timestamppb.Timestamp)(nil),        // 8: google.protobuf.Timestamp
 }
 var file_steward_collab_v1_collab_proto_depIdxs = []int32{
-	6, // 0: steward.collab.v1.IssueTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	0, // 1: steward.collab.v1.CollabTokenService.IssueToken:input_type -> steward.collab.v1.IssueTokenRequest
-	2, // 2: steward.collab.v1.CollabRoomService.FlushDraft:input_type -> steward.collab.v1.FlushDraftRequest
-	4, // 3: steward.collab.v1.CollabRoomService.NotifyDraftPublished:input_type -> steward.collab.v1.NotifyDraftPublishedRequest
-	1, // 4: steward.collab.v1.CollabTokenService.IssueToken:output_type -> steward.collab.v1.IssueTokenResponse
-	3, // 5: steward.collab.v1.CollabRoomService.FlushDraft:output_type -> steward.collab.v1.FlushDraftResponse
-	5, // 6: steward.collab.v1.CollabRoomService.NotifyDraftPublished:output_type -> steward.collab.v1.NotifyDraftPublishedResponse
-	4, // [4:7] is the sub-list for method output_type
-	1, // [1:4] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	8, // 0: steward.collab.v1.IssueTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	8, // 1: steward.collab.v1.IssueAppendixTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	0, // 2: steward.collab.v1.CollabTokenService.IssueToken:input_type -> steward.collab.v1.IssueTokenRequest
+	2, // 3: steward.collab.v1.CollabTokenService.IssueAppendixToken:input_type -> steward.collab.v1.IssueAppendixTokenRequest
+	4, // 4: steward.collab.v1.CollabRoomService.FlushDraft:input_type -> steward.collab.v1.FlushDraftRequest
+	6, // 5: steward.collab.v1.CollabRoomService.NotifyDraftPublished:input_type -> steward.collab.v1.NotifyDraftPublishedRequest
+	1, // 6: steward.collab.v1.CollabTokenService.IssueToken:output_type -> steward.collab.v1.IssueTokenResponse
+	3, // 7: steward.collab.v1.CollabTokenService.IssueAppendixToken:output_type -> steward.collab.v1.IssueAppendixTokenResponse
+	5, // 8: steward.collab.v1.CollabRoomService.FlushDraft:output_type -> steward.collab.v1.FlushDraftResponse
+	7, // 9: steward.collab.v1.CollabRoomService.NotifyDraftPublished:output_type -> steward.collab.v1.NotifyDraftPublishedResponse
+	6, // [6:10] is the sub-list for method output_type
+	2, // [2:6] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_steward_collab_v1_collab_proto_init() }
@@ -454,7 +598,7 @@ func file_steward_collab_v1_collab_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_steward_collab_v1_collab_proto_rawDesc), len(file_steward_collab_v1_collab_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

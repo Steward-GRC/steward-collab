@@ -16,6 +16,11 @@ service CollabTokenService {
   // the caller's own actor, read from the go-grpc-actor metadata. During
   // act-as the token names the target and carries the real admin.
   rpc IssueToken(IssueTokenRequest) returns (IssueTokenResponse);
+  // IssueAppendixToken authorizes the caller to edit the appendix's policy and
+  // mints a token for the appendix's own room, "appendix:<appendix_id>". The
+  // checks are the policy token's: the caller must be allowed to edit the
+  // policy the appendix belongs to, which collab reads from core.
+  rpc IssueAppendixToken(IssueAppendixTokenRequest) returns (IssueAppendixTokenResponse);
 }
 
 message IssueTokenRequest {
@@ -34,6 +39,26 @@ message IssueTokenResponse {
   // sets an explicit base: "/collab/ws/<draft_id>".
   string ws_url = 2;
   google.protobuf.Timestamp expires_at = 3;
+}
+
+message IssueAppendixTokenRequest {
+  // Required. The appendix to co-edit. Its policy comes from core, so a
+  // caller cannot pair an appendix with a policy it may edit instead.
+  string appendix_id = 1;
+}
+
+message IssueAppendixTokenResponse {
+  string token = 1;
+  // The websocket path, relative to the gateway origin unless the deployment
+  // sets an explicit base: "/collab/ws/appendix%3A<appendix_id>".
+  string ws_url = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  // The room key, "appendix:<appendix_id>". It is the draft_id to pass to
+  // CollabRoomService.FlushDraft and NotifyDraftPublished for this room.
+  string room_key = 4;
+  // The appendix's policy, as core reports it. FlushDraft and
+  // NotifyDraftPublished need it as policy_id.
+  string policy_id = 5;
 }
 
 // CollabRoomService acts on a running room from outside the process. It mints

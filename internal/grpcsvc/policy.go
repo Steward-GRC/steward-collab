@@ -17,6 +17,7 @@ const CallerGateway = "gateway"
 // user's actor.
 var CallerPolicy = workloadidentity.Policy{
 	collabv1.CollabTokenService_IssueToken_FullMethodName:          {CallerGateway: workloadidentity.OnBehalf},
+	collabv1.CollabTokenService_IssueAppendixToken_FullMethodName:  {CallerGateway: workloadidentity.OnBehalf},
 	collabv1.CollabRoomService_FlushDraft_FullMethodName:           {CallerGateway: workloadidentity.OnBehalf},
 	collabv1.CollabRoomService_NotifyDraftPublished_FullMethodName: {CallerGateway: workloadidentity.OnBehalf},
 }
