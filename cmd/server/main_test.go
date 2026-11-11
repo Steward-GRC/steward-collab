@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 
+	workloadidentity "github.com/Bugs5382/go-workload-identity"
 	"github.com/Steward-GRC/steward-collab/internal/audit"
-	"github.com/Steward-GRC/steward-collab/internal/workloadauth"
 )
 
 // The HTTP listener carries the websocket upgrades and the probes and nothing
@@ -51,10 +51,10 @@ func (r *recordingPublisher) Publish(_ context.Context, _ string, body []byte) e
 // A refused call is audited with who called what and why, never the request.
 func TestAuditDenialRecordsTheRefusal(t *testing.T) {
 	pub := &recordingPublisher{}
-	auditDenial(audit.New(pub), log.Nop())(t.Context(), workloadauth.Denial{
+	auditDenial(audit.New(pub), log.Nop())(t.Context(), workloadidentity.Denial{
 		Method: "/steward.collab.v1.CollabTokenService/IssueToken",
-		Caller: workloadauth.Caller{Name: "workflow", ServiceAccount: "steward/steward-workflow"},
-		Code:   codes.PermissionDenied, Reason: workloadauth.ReasonMethodNotAllowed,
+		Caller: workloadidentity.Caller{Name: "workflow", ServiceAccount: "steward/steward-workflow"},
+		Code:   codes.PermissionDenied, Reason: workloadidentity.ReasonMethodNotAllowed,
 		Request: "secret request body",
 	})
 	require.Len(t, pub.bodies, 1)

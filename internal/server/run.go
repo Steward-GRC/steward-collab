@@ -25,7 +25,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	"github.com/Steward-GRC/steward-collab/internal/workloadauth"
+	workloadidentity "github.com/Bugs5382/go-workload-identity"
 )
 
 // gracefulStopTimeout bounds the drain of in-flight RPCs on shutdown, so a
@@ -49,11 +49,11 @@ const (
 // local runs only.
 type Options struct {
 	// Verifier checks the caller's projected service-account token.
-	Verifier workloadauth.TokenVerifier
+	Verifier workloadidentity.TokenVerifier
 	// Policy is the per-method caller allow-list.
-	Policy workloadauth.Policy
+	Policy workloadidentity.Policy
 	// OnDeny is called for every refused call, to audit it.
-	OnDeny workloadauth.DenyHook
+	OnDeny workloadidentity.DenyHook
 	// Checker holds the dependencies readiness follows.
 	Checker *health.Checker
 	// CheckInterval is how often Health/Watch subscribers are brought up to
@@ -86,12 +86,12 @@ func Serve(ctx context.Context, lis net.Listener, lg log.Logger, opts Options, r
 	stream := []grpc.StreamServerInterceptor{bi.StreamServerInterceptor(), recoverStream(lg)}
 	trust := grpcactor.TrustFunc(func(context.Context, string) bool { return true })
 	if opts.Verifier != nil {
-		var authOpts []workloadauth.Option
+		var authOpts []workloadidentity.Option
 		if opts.OnDeny != nil {
-			authOpts = append(authOpts, workloadauth.WithDenyHook(opts.OnDeny))
+			authOpts = append(authOpts, workloadidentity.WithDenyHook(opts.OnDeny))
 		}
-		unary = append(unary, workloadauth.UnaryServerInterceptor(opts.Verifier, opts.Policy, lg, authOpts...))
-		stream = append(stream, workloadauth.StreamServerInterceptor(opts.Verifier, opts.Policy, lg, authOpts...))
+		unary = append(unary, workloadidentity.UnaryServerInterceptor(opts.Verifier, opts.Policy, lg, authOpts...))
+		stream = append(stream, workloadidentity.StreamServerInterceptor(opts.Verifier, opts.Policy, lg, authOpts...))
 		trust = actorPassing
 	}
 	unary = append(unary, grpcactor.UnaryServerInterceptor(grpcactor.WithTrust(trust)))
@@ -134,8 +134,8 @@ func Serve(ctx context.Context, lis net.Listener, lg log.Logger, opts Options, r
 // as acting on a user's behalf for this method; any other caller acts as
 // itself.
 func actorPassing(ctx context.Context, _ string) bool {
-	g, ok := workloadauth.GrantFromContext(ctx)
-	return ok && g.Access == workloadauth.OnBehalf
+	g, ok := workloadidentity.GrantFromContext(ctx)
+	return ok && g.Access == workloadidentity.OnBehalf
 }
 
 // RegisterProbes adds /livez and /readyz to mux, the HTTP listener the

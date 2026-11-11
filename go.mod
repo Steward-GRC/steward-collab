@@ -1,6 +1,6 @@
 module github.com/Steward-GRC/steward-collab
 
-go 1.26.10
+go 1.26.11
 
 require (
 	github.com/Bugs5382/go-apperr v1.2.1
@@ -10,6 +10,7 @@ require (
 	github.com/Bugs5382/go-otel v1.3.2
 	github.com/Bugs5382/go-postgres v1.2.2
 	github.com/Bugs5382/go-rabbitmq v1.3.0
+	github.com/Bugs5382/go-workload-identity v1.0.0
 	github.com/Steward-GRC/steward-authz v0.0.0-20261004225933-2e7c82d1efea
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
