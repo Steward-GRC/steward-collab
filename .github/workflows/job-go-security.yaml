@@ -22,6 +22,8 @@ name: Go Security
 #   Go toolchain with the job's Go (so it always matches go.mod) and cached; later
 #   runs restore the binary instead of compiling it.
 #
+# Limited CI mode (org variable CI_MODE=limited, issue #47): the PR jobs skip and the
+# nightly schedule and release/** pushes run instead. Delete the variable to revert.
 # Pull requests (not drafts) and the weekly schedule, which catches advisories
 # published after the last PR. There is no rerun on push to main: the PR run
 # already scanned the tree being merged.
@@ -29,8 +31,10 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: ['release/**']
   schedule:
-    - cron: '17 6 * * 1'
+    - cron: '17 6 * * *'
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -40,7 +44,7 @@ permissions:
 jobs:
   govulncheck:
     name: 🛡️ Govulncheck
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || (github.event.pull_request.draft == false && vars.CI_MODE != 'limited')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -80,7 +84,7 @@ jobs:
 
   gosec:
     name: 🔐 Gosec
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || (github.event.pull_request.draft == false && vars.CI_MODE != 'limited')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
