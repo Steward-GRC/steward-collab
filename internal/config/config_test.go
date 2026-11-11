@@ -109,6 +109,7 @@ func TestLoadWorkloadAuth(t *testing.T) {
 	require.True(t, c.WorkloadAuth)
 	require.Equal(t, issuer, c.Workload.Issuer)
 	require.Equal(t, "steward", c.Workload.Audience, "Steward's audience, not the package default")
+	require.Equal(t, "steward-", c.Workload.ServiceAccountPrefix)
 	require.Equal(t, []string{"steward/steward-gateway"}, c.Workload.AllowedServiceAccounts)
 	require.Equal(t, DefaultTokenFile, c.TokenFile)
 }
