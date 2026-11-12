@@ -93,12 +93,13 @@ const rootRole = "root"
 
 // model is the engine configuration: the five default actions (Manage implies
 // Read and Author, Ack requires Read, owners hold Read, Author, Approve and
-// Manage but not Ack) and the root seat, exempt for every action except Ack.
+// Manage but not Ack) and the root seat, exempt for Read, Author and Manage
+// only: Approve and Ack follow the rows for root too.
 func model() ordered.Model {
 	m := ordered.DefaultModel()
 	m.Superusers = &ordered.Superusers{
 		Subjects: []string{"role:" + rootRole},
-		Actions:  []string{actRead, actAuthor, actApprove, actManage},
+		Actions:  []string{actRead, actAuthor, actManage},
 	}
 	return m
 }
