@@ -74,3 +74,17 @@ tasks:
     cmds:
       - go install github.com/Bugs5382/golic/cmd/golic@{{.GOLIC_VERSION}}
       - golic inject -t {{.TEMPLATE_LIC}} -c "{{.COMMON_LIC}}"
+  catalog:refresh:
+    desc: Re-fetch the canonical Steward catalog at COMMIT into internal/authz (task catalog:refresh COMMIT=sha)
+    requires:
+      vars: [COMMIT]
+    vars:
+      SOURCE_REPO: Steward-GRC/steward-gateway
+      SOURCE_PATH: internal/authz/catalog.json
+    cmds:
+      - |
+        gh api "repos/{{.SOURCE_REPO}}/contents/{{.SOURCE_PATH}}?ref={{.COMMIT}}" -H "Accept: application/vnd.github.raw" > internal/authz/testdata/catalog.canonical.json
+      - cp internal/authz/testdata/catalog.canonical.json internal/authz/catalog.json
+      - |
+        printf 'commit: {{.COMMIT}}\npath: {{.SOURCE_PATH}}\nrepo: {{.SOURCE_REPO}}\n' > internal/authz/testdata/CATALOG_SOURCE
+      - go test ./internal/authz

@@ -23,9 +23,15 @@ from a caller the method lists as acting on a user's behalf.
 
 | `IssueAppendixToken` | The same for an appendix's own room, `appendix:<appendix_id>`. Takes only `appendix_id`; collab reads the appendix's policy from core (`GetPolicyAppendix`) and runs the edit check against it, so a caller cannot pair an appendix with a policy it may edit. Returns the token, the websocket path (`/collab/ws/appendix%3A<appendix_id>`), the expiry, the `room_key` and the `policy_id`. |
 
-The edit check: the policy's owner, or a caller whose `policy.author` grant (steward-authz) is
-scoped to the policy's home category or one of its ancestors. Site admins pass through
-steward-authz. Refused with `DRAFT_EDIT_FORBIDDEN`; `POLICY_NOT_FOUND` when core has no such
+The edit check: the policy's owner; or Author or Manage allowed by the category rules over the
+policy's home category and its ancestors (read from core in one `GetEffectiveRuleset` call and
+decided by `go-authz/ordered`: first non-blank cell wins, the category's own rows before its
+parents', owners of any level always allowed and immune to deny, the root seat exempt); or a
+caller whose catalog `policy.author` grant (`go-authz/rbac`) is scoped to the home category or one
+of its ancestors. A site admin who is not root gets no edit right without a rule. The same check
+runs again on every websocket join, before the upgrade: a user who lost the right since the token
+was minted gets 403 `DRAFT_EDIT_FORBIDDEN`, and 503 `EDIT_CHECK_UNAVAILABLE` when core or identity
+can't be reached. Refused with `DRAFT_EDIT_FORBIDDEN`; `POLICY_NOT_FOUND` when core has no such
 policy; `EDIT_CHECK_UNAVAILABLE` when core or identity can't be reached.
 
 `IssueAppendixToken` refuses with `APPENDIX_ID_REQUIRED`, `APPENDIX_NOT_FOUND` (checked first),
@@ -123,8 +129,8 @@ own service-account token (`WORKLOAD_TOKEN_FILE`) and the request's actor on eve
 
 | Service | Calls | Why |
 | --- | --- | --- |
-| steward-core | `PolicyService.GetPolicy`, `PolicyService.UpdateDraftContent`, `CategoryService.GetCategory`, `PolicyAppendixService.GetPolicyAppendix`, `PolicyAppendixService.CheckpointAppendixDraft` | the edit check (owner, home category and its ancestors), every policy snapshot, the appendix lookup behind `IssueAppendixToken` and every appendix snapshot |
-| steward-identity | `IdentityReadService.GetUser` | the caller's roles and scoped grants for the edit check, and the presence name |
+| steward-core | `PolicyService.GetPolicy`, `PolicyService.UpdateDraftContent`, `CategoryService.GetEffectiveRuleset`, `PolicyAppendixService.GetPolicyAppendix`, `PolicyAppendixService.CheckpointAppendixDraft` | the edit check (owner, home category and its ancestors' rules and owners), every policy snapshot, the appendix lookup behind `IssueAppendixToken` and every appendix snapshot |
+| steward-identity | `IdentityReadService.GetUser` | the caller's roles, scoped grants, groups and root flag for the edit check, and the presence name |
 | steward-audit | publishes `steward.audit.v1.AuditEvent` to the `audit` exchange | `collab.token.issued`, `collab.session.joined` and `left`, `collab.snapshot.accepted` and `rejected`, `collab.room.frozen` |
 
 Bump a ref, run `task proto` and commit `gen/` in the same change.

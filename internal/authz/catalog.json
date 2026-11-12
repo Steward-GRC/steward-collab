@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "baselineRole": "reader",
+  "read": {
+    "permission": "policy.read",
+    "sensitivePermission": "policy.read_sensitive",
+    "obfuscateRoles": ["site-admin"]
+  },
+  "permissions": [
+    { "name": "policy.read" },
+    { "name": "policy.read_sensitive" },
+    { "name": "policy.author",  "scoped": true, "scopeRole": "author",   "bypassRoles": ["site-admin"] },
+    { "name": "policy.submit",  "scoped": true, "scopeRole": "author",   "bypassRoles": ["site-admin"] },
+    { "name": "policy.approve", "scoped": true, "scopeRole": "approver" },
+    { "name": "template.manage" },
+    { "name": "workflow.manage" },
+    { "name": "group.manage" },
+    { "name": "user.manage" },
+    { "name": "role.manage" },
+    { "name": "audit.read" },
+    { "name": "compliance.manage" },
+    { "name": "compliance.report" },
+    { "name": "settings.manage" },
+    { "name": "delivery.manage" },
+    { "name": "session.manage" }
+  ],
+  "roles": [
+    { "name": "reader",           "permissions": ["policy.read"] },
+    { "name": "author",           "permissions": ["policy.read", "policy.author", "policy.submit"] },
+    { "name": "approver",         "permissions": ["policy.read", "policy.approve"] },
+    { "name": "template-admin",   "permissions": ["policy.read", "template.manage", "workflow.manage"] },
+    { "name": "compliance-admin", "permissions": ["policy.read", "compliance.manage", "compliance.report", "audit.read"] },
+    { "name": "site-admin",       "permissions": ["*"] }
+  ]
+}

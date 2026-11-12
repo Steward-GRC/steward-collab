@@ -12,7 +12,7 @@ browser joins with, and flushes and freezes a room around a publish.
 
 - ✍️ **Snapshots** on a 5 second debounce, when the last editor leaves and before a publish; every
   editor is told whether core took them.
-- 🔐 **Tokens** for editors only: the policy's owner, or an author scoped to its category.
+- 🔐 **Tokens** for editors only: the policy's owner, anyone its category rules let author or manage (owners and root included), or an author scoped to its category.
 - 🎭 **Act-as**: edits are made as the user acted as and credited to the real admin.
 
 ## 🚀 Run

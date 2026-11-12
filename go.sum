@@ -6,8 +6,8 @@ github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c h1:udKWzYgxTojEK
 github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Bugs5382/go-apperr v1.2.1 h1:+IFP+LQWu4BTPDX2ezkjEhfvn5HTvBHirL2b77EXmvU=
 github.com/Bugs5382/go-apperr v1.2.1/go.mod h1:IX+TmCj35CSUNK/JU16pPTn4L4qpDreVOc7i4Q3dxy4=
-github.com/Bugs5382/go-authz v1.0.0 h1:I8BRm53nJX2GGc2+A/eNaIOrYwp7YYYXMFHOmP+fEhM=
-github.com/Bugs5382/go-authz v1.0.0/go.mod h1:H0c0JA7yIZ+4jcf8hXUB1GkASJ7sf5OuhwBxBqV/Asc=
+github.com/Bugs5382/go-authz v1.1.0 h1:tmaXJcGOvf2YBtbxPDZ3KU/rNDqU88tdXyDzgvop5Jg=
+github.com/Bugs5382/go-authz v1.1.0/go.mod h1:QhTs6JAB+V/jRgpY0xfcnOhtnEz7n2JBMT4qfKisgiE=
 github.com/Bugs5382/go-buildinfo v1.0.0 h1:oxFnQOlYxH9MtCsDALz3AP4eEKW8uFMTJVKSD8pa6qA=
 github.com/Bugs5382/go-buildinfo v1.0.0/go.mod h1:5WxMB/NqiSjXGv23QQWNSySwpT5HldJ2iL8NQ/MkVbc=
 github.com/Bugs5382/go-grpc-actor v1.0.0 h1:PViLikqce2DlHlf4iHzxvUwvXupP8hQk1xXqYiUrScE=
@@ -24,8 +24,6 @@ github.com/Bugs5382/go-workload-identity v1.0.0 h1:XEg8Byo7VH6Mb+Fv0kJEdUCiZXX9D
 github.com/Bugs5382/go-workload-identity v1.0.0/go.mod h1:9IEkIsg3BqcmhT7fV9uO/EWp3VF1b7PYBFrX7x3sN/8=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
-github.com/Steward-GRC/steward-authz v0.0.0-20261004225933-2e7c82d1efea h1:hypwP7hekyU6aSuY987LmOiNbzRBhIEXnRLNKbhPdvY=
-github.com/Steward-GRC/steward-authz v0.0.0-20261004225933-2e7c82d1efea/go.mod h1:0eF2fnbW/gqGUeymUZm0bS2ZUDY9IWTWVA7pnkYgiSM=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=

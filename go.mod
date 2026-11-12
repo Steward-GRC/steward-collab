@@ -4,6 +4,7 @@ go 1.26.11
 
 require (
 	github.com/Bugs5382/go-apperr v1.2.1
+	github.com/Bugs5382/go-authz v1.1.0
 	github.com/Bugs5382/go-buildinfo v1.0.0
 	github.com/Bugs5382/go-grpc-actor v1.0.0
 	github.com/Bugs5382/go-log v1.3.0
@@ -11,7 +12,6 @@ require (
 	github.com/Bugs5382/go-postgres v1.2.2
 	github.com/Bugs5382/go-rabbitmq v1.3.0
 	github.com/Bugs5382/go-workload-identity v1.0.0
-	github.com/Steward-GRC/steward-authz v0.0.0-20261004225933-2e7c82d1efea
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
@@ -26,7 +26,6 @@ require (
 require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
-	github.com/Bugs5382/go-authz v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
