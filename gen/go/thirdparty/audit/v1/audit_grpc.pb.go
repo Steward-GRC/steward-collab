@@ -26,6 +26,7 @@ const (
 	AuditService_ExportAuditSegment_FullMethodName = "/steward.audit.v1.AuditService/ExportAuditSegment"
 	AuditService_VerifyAuditChain_FullMethodName   = "/steward.audit.v1.AuditService/VerifyAuditChain"
 	AuditService_ListRecentEvents_FullMethodName   = "/steward.audit.v1.AuditService/ListRecentEvents"
+	AuditService_ListAuditActions_FullMethodName   = "/steward.audit.v1.AuditService/ListAuditActions"
 	AuditService_ShredSubject_FullMethodName       = "/steward.audit.v1.AuditService/ShredSubject"
 	AuditService_CreateLegalHold_FullMethodName    = "/steward.audit.v1.AuditService/CreateLegalHold"
 	AuditService_ListLegalHolds_FullMethodName     = "/steward.audit.v1.AuditService/ListLegalHolds"
@@ -49,6 +50,9 @@ type AuditServiceClient interface {
 	// ListRecentEvents returns records that occurred at or after a time, for a
 	// polling tail.
 	ListRecentEvents(ctx context.Context, in *ListRecentEventsRequest, opts ...grpc.CallOption) (*ListRecentEventsResponse, error)
+	// ListAuditActions returns the distinct action codes the log holds, sorted,
+	// for a filter dropdown. Any authenticated requester may call it.
+	ListAuditActions(ctx context.Context, in *ListAuditActionsRequest, opts ...grpc.CallOption) (*ListAuditActionsResponse, error)
 	// ShredSubject crypto-shreds a subject: its key is destroyed and its
 	// personal data cleared from activity records. Needs compliance.manage; the
 	// shred is itself recorded as "subject.shredded".
@@ -112,6 +116,16 @@ func (c *auditServiceClient) ListRecentEvents(ctx context.Context, in *ListRecen
 	return out, nil
 }
 
+func (c *auditServiceClient) ListAuditActions(ctx context.Context, in *ListAuditActionsRequest, opts ...grpc.CallOption) (*ListAuditActionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAuditActionsResponse)
+	err := c.cc.Invoke(ctx, AuditService_ListAuditActions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *auditServiceClient) ShredSubject(ctx context.Context, in *ShredSubjectRequest, opts ...grpc.CallOption) (*ShredSubjectResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ShredSubjectResponse)
@@ -169,6 +183,9 @@ type AuditServiceServer interface {
 	// ListRecentEvents returns records that occurred at or after a time, for a
 	// polling tail.
 	ListRecentEvents(context.Context, *ListRecentEventsRequest) (*ListRecentEventsResponse, error)
+	// ListAuditActions returns the distinct action codes the log holds, sorted,
+	// for a filter dropdown. Any authenticated requester may call it.
+	ListAuditActions(context.Context, *ListAuditActionsRequest) (*ListAuditActionsResponse, error)
 	// ShredSubject crypto-shreds a subject: its key is destroyed and its
 	// personal data cleared from activity records. Needs compliance.manage; the
 	// shred is itself recorded as "subject.shredded".
@@ -203,6 +220,9 @@ func (UnimplementedAuditServiceServer) VerifyAuditChain(context.Context, *Verify
 }
 func (UnimplementedAuditServiceServer) ListRecentEvents(context.Context, *ListRecentEventsRequest) (*ListRecentEventsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListRecentEvents not implemented")
+}
+func (UnimplementedAuditServiceServer) ListAuditActions(context.Context, *ListAuditActionsRequest) (*ListAuditActionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAuditActions not implemented")
 }
 func (UnimplementedAuditServiceServer) ShredSubject(context.Context, *ShredSubjectRequest) (*ShredSubjectResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ShredSubject not implemented")
@@ -309,6 +329,24 @@ func _AuditService_ListRecentEvents_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuditService_ListAuditActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAuditActionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuditServiceServer).ListAuditActions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuditService_ListAuditActions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuditServiceServer).ListAuditActions(ctx, req.(*ListAuditActionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuditService_ShredSubject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ShredSubjectRequest)
 	if err := dec(in); err != nil {
@@ -403,6 +441,10 @@ var AuditService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRecentEvents",
 			Handler:    _AuditService_ListRecentEvents_Handler,
+		},
+		{
+			MethodName: "ListAuditActions",
+			Handler:    _AuditService_ListAuditActions_Handler,
 		},
 		{
 			MethodName: "ShredSubject",
