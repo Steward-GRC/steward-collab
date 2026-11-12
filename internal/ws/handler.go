@@ -12,6 +12,8 @@ import (
 	log "github.com/Bugs5382/go-log"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
+
+	"github.com/Steward-GRC/steward-collab/internal/access"
 )
 
 // TokenAudience is the audience claim that every valid collab token must carry.
@@ -37,6 +39,13 @@ type CollabClaims struct {
 	Impersonator string `json:"imp,omitempty"`
 }
 
+// EditChecker decides whether a user may co-edit a policy's draft.
+// *access.Checker implements it. The handler asks it again on every join, so a
+// right removed after the token was minted stops the session.
+type EditChecker interface {
+	CanEdit(ctx context.Context, userID, policyID string) (access.Result, error)
+}
+
 // Handler upgrades HTTP requests to websockets after verifying a short-lived
 // HS256-signed JWT supplied as ?token=... or in an Authorization: Bearer header.
 type Handler struct {
@@ -49,6 +58,9 @@ type Handler struct {
 	// which is the intended production posture: browsers reach collab through
 	// the gateway's WebSocket reverse proxy, never directly.
 	allowedOrigins []string
+
+	// edit re-checks the edit right at join; nil admits on the token alone.
+	edit EditChecker
 }
 
 // NewHandler returns an HTTP handler that upgrades connections to websockets
@@ -66,6 +78,15 @@ func NewHandler(hub *Hub, secret string, logger log.Logger) *Handler {
 // trailing slash), e.g. "https://policies.example.org".
 func (h *Handler) WithAllowedOrigins(origins []string) *Handler {
 	h.allowedOrigins = origins
+	return h
+}
+
+// WithEditCheck makes the handler re-check the user's edit right on every
+// join, before the upgrade, and returns h. A join the check refuses gets 403
+// and one it cannot answer gets 503 (500 for any other failure): the session
+// fails closed. The token alone admits when no check is set.
+func (h *Handler) WithEditCheck(edit EditChecker) *Handler {
+	h.edit = edit
 	return h
 }
 
@@ -134,6 +155,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !h.mayJoin(w, r, claims) {
+		return
+	}
+
 	conn, err := h.upgrader().Upgrade(w, r, nil)
 	if err != nil {
 		// upgrader.Upgrade has already written an error response.
@@ -156,6 +181,33 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	NewImpersonatedClient(bgCtx, room, conn, claims.UserID, claims.DisplayName, claims.Impersonator, h.logger)
+}
+
+// mayJoin re-evaluates the edit right for the token's user and policy and
+// writes the refusal when it fails. The token was minted with the right, but
+// the right can go before the token expires.
+func (h *Handler) mayJoin(w http.ResponseWriter, r *http.Request, claims *CollabClaims) bool {
+	if h.edit == nil {
+		return true
+	}
+	res, err := h.edit.CanEdit(r.Context(), claims.UserID, claims.PolicyID)
+	switch {
+	case errors.Is(err, access.ErrPolicyNotFound):
+		h.logger.Info("collab join refused: policy not found", log.F("policy_id", claims.PolicyID), log.F("user_id", claims.UserID))
+		http.Error(w, "DRAFT_EDIT_FORBIDDEN", http.StatusForbidden)
+	case errors.Is(err, access.ErrUnavailable):
+		h.logger.Warn("collab join refused: edit check could not reach a peer", log.F("error", err.Error()), log.F("policy_id", claims.PolicyID))
+		http.Error(w, "EDIT_CHECK_UNAVAILABLE", http.StatusServiceUnavailable)
+	case err != nil:
+		h.logger.Error(err, "collab join refused: edit check failed", log.F("policy_id", claims.PolicyID))
+		http.Error(w, "edit check failed", http.StatusInternalServerError)
+	case !res.Allowed:
+		h.logger.Info("collab join refused: no edit right", log.F("policy_id", claims.PolicyID), log.F("user_id", claims.UserID))
+		http.Error(w, "DRAFT_EDIT_FORBIDDEN", http.StatusForbidden)
+	default:
+		return true
+	}
+	return false
 }
 
 // extractToken returns the token from ?token= or from an

@@ -52,7 +52,7 @@ func Entries() []apperr.Entry {
 		{Code: CodeActorRequired, Symbol: "ACTOR_REQUIRED", Category: apperr.CategoryUnauthenticated,
 			Title: "request", Cause: "the call carries no go-grpc-actor actor, so there is nobody to mint a token for or attribute the action to"},
 		{Code: CodeDraftEditForbidden, Symbol: "DRAFT_EDIT_FORBIDDEN", Category: apperr.CategoryPermissionDenied,
-			Title: "token", Cause: "the caller neither owns the policy nor holds an author grant in its home category or an ancestor",
+			Title: "token", Cause: "the caller neither owns the policy, nor may author or manage it under its home category's rules and owners (ancestors included), nor holds a scoped author grant there",
 			UserSafe: true, Message: "You don't have permission to edit this draft."},
 		{Code: CodeRoomPolicyMismatch, Symbol: "ROOM_POLICY_MISMATCH", Category: apperr.CategoryFailedPrecondition,
 			Title: "room", Cause: "the live room for the draft belongs to a different policy than the request names, so the room is left alone"},

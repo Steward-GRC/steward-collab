@@ -53,6 +53,7 @@ const (
 	PolicyService_ReindexPolicy_FullMethodName           = "/steward.core.v1.PolicyService/ReindexPolicy"
 	PolicyService_ReindexPolicyVersion_FullMethodName    = "/steward.core.v1.PolicyService/ReindexPolicyVersion"
 	PolicyService_ReindexAllPublished_FullMethodName     = "/steward.core.v1.PolicyService/ReindexAllPublished"
+	PolicyService_SearchPolicies_FullMethodName          = "/steward.core.v1.PolicyService/SearchPolicies"
 )
 
 // PolicyServiceClient is the client API for PolicyService service.
@@ -102,6 +103,12 @@ type PolicyServiceClient interface {
 	ReindexPolicy(ctx context.Context, in *ReindexPolicyRequest, opts ...grpc.CallOption) (*ReindexPolicyResponse, error)
 	ReindexPolicyVersion(ctx context.Context, in *ReindexPolicyVersionRequest, opts ...grpc.CallOption) (*ReindexPolicyVersionResponse, error)
 	ReindexAllPublished(ctx context.Context, in *ReindexAllPublishedRequest, opts ...grpc.CallOption) (*ReindexAllPublishedResponse, error)
+	// SearchPolicies finds documents by the words in their title, number and published text
+	// (appendices included): never a draft, a version in review, a superseded version or a retired
+	// document. It does not decide who may read what. The hits carry published text, so the gateway
+	// filters them by the reader's read decision and shows no snippet to a reader whose content is
+	// obfuscated.
+	SearchPolicies(ctx context.Context, in *SearchPoliciesRequest, opts ...grpc.CallOption) (*SearchPoliciesResponse, error)
 }
 
 type policyServiceClient struct {
@@ -422,6 +429,16 @@ func (c *policyServiceClient) ReindexAllPublished(ctx context.Context, in *Reind
 	return out, nil
 }
 
+func (c *policyServiceClient) SearchPolicies(ctx context.Context, in *SearchPoliciesRequest, opts ...grpc.CallOption) (*SearchPoliciesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchPoliciesResponse)
+	err := c.cc.Invoke(ctx, PolicyService_SearchPolicies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PolicyServiceServer is the server API for PolicyService service.
 // All implementations must embed UnimplementedPolicyServiceServer
 // for forward compatibility.
@@ -469,6 +486,12 @@ type PolicyServiceServer interface {
 	ReindexPolicy(context.Context, *ReindexPolicyRequest) (*ReindexPolicyResponse, error)
 	ReindexPolicyVersion(context.Context, *ReindexPolicyVersionRequest) (*ReindexPolicyVersionResponse, error)
 	ReindexAllPublished(context.Context, *ReindexAllPublishedRequest) (*ReindexAllPublishedResponse, error)
+	// SearchPolicies finds documents by the words in their title, number and published text
+	// (appendices included): never a draft, a version in review, a superseded version or a retired
+	// document. It does not decide who may read what. The hits carry published text, so the gateway
+	// filters them by the reader's read decision and shows no snippet to a reader whose content is
+	// obfuscated.
+	SearchPolicies(context.Context, *SearchPoliciesRequest) (*SearchPoliciesResponse, error)
 	mustEmbedUnimplementedPolicyServiceServer()
 }
 
@@ -571,6 +594,9 @@ func (UnimplementedPolicyServiceServer) ReindexPolicyVersion(context.Context, *R
 }
 func (UnimplementedPolicyServiceServer) ReindexAllPublished(context.Context, *ReindexAllPublishedRequest) (*ReindexAllPublishedResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReindexAllPublished not implemented")
+}
+func (UnimplementedPolicyServiceServer) SearchPolicies(context.Context, *SearchPoliciesRequest) (*SearchPoliciesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SearchPolicies not implemented")
 }
 func (UnimplementedPolicyServiceServer) mustEmbedUnimplementedPolicyServiceServer() {}
 func (UnimplementedPolicyServiceServer) testEmbeddedByValue()                       {}
@@ -1151,6 +1177,24 @@ func _PolicyService_ReindexAllPublished_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PolicyService_SearchPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchPoliciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).SearchPolicies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_SearchPolicies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).SearchPolicies(ctx, req.(*SearchPoliciesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PolicyService_ServiceDesc is the grpc.ServiceDesc for PolicyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1281,6 +1325,10 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReindexAllPublished",
 			Handler:    _PolicyService_ReindexAllPublished_Handler,
+		},
+		{
+			MethodName: "SearchPolicies",
+			Handler:    _PolicyService_SearchPolicies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

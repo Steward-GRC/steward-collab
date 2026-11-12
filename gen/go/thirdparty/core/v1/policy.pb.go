@@ -4072,6 +4072,326 @@ func (x *ReindexAllPublishedResponse) GetFailures() int32 {
 	return 0
 }
 
+// SearchPoliciesRequest searches the text of published documents.
+type SearchPoliciesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The words to find; every word must match, whole words, ignoring case, in the title, the
+	// number or the published text. At most 256 characters. A blank query finds nothing.
+	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	// Unspecified searches policies and procedures both.
+	DocumentType DocumentType `protobuf:"varint,2,opt,name=document_type,json=documentType,proto3,enum=steward.core.v1.DocumentType" json:"document_type,omitempty"`
+	// Page size, 1 to 100; 0 means 20.
+	Limit int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	// Hits to skip, from the start of the ranked list.
+	Offset        int32 `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchPoliciesRequest) Reset() {
+	*x = SearchPoliciesRequest{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[67]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchPoliciesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchPoliciesRequest) ProtoMessage() {}
+
+func (x *SearchPoliciesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[67]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchPoliciesRequest.ProtoReflect.Descriptor instead.
+func (*SearchPoliciesRequest) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{67}
+}
+
+func (x *SearchPoliciesRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *SearchPoliciesRequest) GetDocumentType() DocumentType {
+	if x != nil {
+		return x.DocumentType
+	}
+	return DocumentType_DOCUMENT_TYPE_UNSPECIFIED
+}
+
+func (x *SearchPoliciesRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *SearchPoliciesRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+// SearchMatch is a run of a snippet's text, counted in UTF-16 code units (as JavaScript,
+// NSString and Kotlin index strings).
+type SearchMatch struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Start         int32                  `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
+	Length        int32                  `protobuf:"varint,2,opt,name=length,proto3" json:"length,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchMatch) Reset() {
+	*x = SearchMatch{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[68]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchMatch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchMatch) ProtoMessage() {}
+
+func (x *SearchMatch) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[68]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchMatch.ProtoReflect.Descriptor instead.
+func (*SearchMatch) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{68}
+}
+
+func (x *SearchMatch) GetStart() int32 {
+	if x != nil {
+		return x.Start
+	}
+	return 0
+}
+
+func (x *SearchMatch) GetLength() int32 {
+	if x != nil {
+		return x.Length
+	}
+	return 0
+}
+
+// PolicySearchSnippet is a passage of the published text, plain (no markup), with where the query
+// matched in it. A passage that runs long is cut to a window around its first match, with an
+// ellipsis at a cut end.
+type PolicySearchSnippet struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	Matches       []*SearchMatch         `protobuf:"bytes,2,rep,name=matches,proto3" json:"matches,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolicySearchSnippet) Reset() {
+	*x = PolicySearchSnippet{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[69]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolicySearchSnippet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolicySearchSnippet) ProtoMessage() {}
+
+func (x *PolicySearchSnippet) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[69]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolicySearchSnippet.ProtoReflect.Descriptor instead.
+func (*PolicySearchSnippet) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{69}
+}
+
+func (x *PolicySearchSnippet) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *PolicySearchSnippet) GetMatches() []*SearchMatch {
+	if x != nil {
+		return x.Matches
+	}
+	return nil
+}
+
+// PolicySearchHit is one matching document.
+type PolicySearchHit struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Policy *Policy                `protobuf:"bytes,1,opt,name=policy,proto3" json:"policy,omitempty"`
+	// Higher is better; comparable only within one search. A hit whose title and number hold every
+	// word of the query ranks above one found in the text alone.
+	Rank float64 `protobuf:"fixed64,2,opt,name=rank,proto3" json:"rank,omitempty"`
+	// True when every word of the query is in the title and number alone, which is what a reader
+	// who may not see the text can still be told about.
+	TitleMatch bool `protobuf:"varint,3,opt,name=title_match,json=titleMatch,proto3" json:"title_match,omitempty"`
+	// The rank counting the title and number alone; 0 unless title_match.
+	TitleRank float64 `protobuf:"fixed64,4,opt,name=title_rank,json=titleRank,proto3" json:"title_rank,omitempty"`
+	// The matched passage of the published text. Unset when no word matched the text.
+	Snippet       *PolicySearchSnippet `protobuf:"bytes,5,opt,name=snippet,proto3" json:"snippet,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolicySearchHit) Reset() {
+	*x = PolicySearchHit{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[70]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolicySearchHit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolicySearchHit) ProtoMessage() {}
+
+func (x *PolicySearchHit) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[70]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolicySearchHit.ProtoReflect.Descriptor instead.
+func (*PolicySearchHit) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{70}
+}
+
+func (x *PolicySearchHit) GetPolicy() *Policy {
+	if x != nil {
+		return x.Policy
+	}
+	return nil
+}
+
+func (x *PolicySearchHit) GetRank() float64 {
+	if x != nil {
+		return x.Rank
+	}
+	return 0
+}
+
+func (x *PolicySearchHit) GetTitleMatch() bool {
+	if x != nil {
+		return x.TitleMatch
+	}
+	return false
+}
+
+func (x *PolicySearchHit) GetTitleRank() float64 {
+	if x != nil {
+		return x.TitleRank
+	}
+	return 0
+}
+
+func (x *PolicySearchHit) GetSnippet() *PolicySearchSnippet {
+	if x != nil {
+		return x.Snippet
+	}
+	return nil
+}
+
+type SearchPoliciesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Best first.
+	Hits []*PolicySearchHit `protobuf:"bytes,1,rep,name=hits,proto3" json:"hits,omitempty"`
+	// True when more hits follow this page.
+	HasMore       bool `protobuf:"varint,2,opt,name=has_more,json=hasMore,proto3" json:"has_more,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchPoliciesResponse) Reset() {
+	*x = SearchPoliciesResponse{}
+	mi := &file_steward_core_v1_policy_proto_msgTypes[71]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchPoliciesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchPoliciesResponse) ProtoMessage() {}
+
+func (x *SearchPoliciesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_steward_core_v1_policy_proto_msgTypes[71]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchPoliciesResponse.ProtoReflect.Descriptor instead.
+func (*SearchPoliciesResponse) Descriptor() ([]byte, []int) {
+	return file_steward_core_v1_policy_proto_rawDescGZIP(), []int{71}
+}
+
+func (x *SearchPoliciesResponse) GetHits() []*PolicySearchHit {
+	if x != nil {
+		return x.Hits
+	}
+	return nil
+}
+
+func (x *SearchPoliciesResponse) GetHasMore() bool {
+	if x != nil {
+		return x.HasMore
+	}
+	return false
+}
+
 var File_steward_core_v1_policy_proto protoreflect.FileDescriptor
 
 const file_steward_core_v1_policy_proto_rawDesc = "" +
@@ -4339,7 +4659,29 @@ const file_steward_core_v1_policy_proto_rawDesc = "" +
 	"\x1bReindexAllPublishedResponse\x12-\n" +
 	"\x12policies_reindexed\x18\x01 \x01(\x05R\x11policiesReindexed\x12\x18\n" +
 	"\askipped\x18\x02 \x01(\x05R\askipped\x12\x1a\n" +
-	"\bfailures\x18\x03 \x01(\x05R\bfailures*\x95\x02\n" +
+	"\bfailures\x18\x03 \x01(\x05R\bfailures\"\x9f\x01\n" +
+	"\x15SearchPoliciesRequest\x12\x14\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x12B\n" +
+	"\rdocument_type\x18\x02 \x01(\x0e2\x1d.steward.core.v1.DocumentTypeR\fdocumentType\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x04 \x01(\x05R\x06offset\";\n" +
+	"\vSearchMatch\x12\x14\n" +
+	"\x05start\x18\x01 \x01(\x05R\x05start\x12\x16\n" +
+	"\x06length\x18\x02 \x01(\x05R\x06length\"a\n" +
+	"\x13PolicySearchSnippet\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\x126\n" +
+	"\amatches\x18\x02 \x03(\v2\x1c.steward.core.v1.SearchMatchR\amatches\"\xd6\x01\n" +
+	"\x0fPolicySearchHit\x12/\n" +
+	"\x06policy\x18\x01 \x01(\v2\x17.steward.core.v1.PolicyR\x06policy\x12\x12\n" +
+	"\x04rank\x18\x02 \x01(\x01R\x04rank\x12\x1f\n" +
+	"\vtitle_match\x18\x03 \x01(\bR\n" +
+	"titleMatch\x12\x1d\n" +
+	"\n" +
+	"title_rank\x18\x04 \x01(\x01R\ttitleRank\x12>\n" +
+	"\asnippet\x18\x05 \x01(\v2$.steward.core.v1.PolicySearchSnippetR\asnippet\"i\n" +
+	"\x16SearchPoliciesResponse\x124\n" +
+	"\x04hits\x18\x01 \x03(\v2 .steward.core.v1.PolicySearchHitR\x04hits\x12\x19\n" +
+	"\bhas_more\x18\x02 \x01(\bR\ahasMore*\x95\x02\n" +
 	"\x13PolicyVersionStatus\x12%\n" +
 	"!POLICY_VERSION_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bPOLICY_VERSION_STATUS_DRAFT\x10\x01\x12#\n" +
@@ -4355,7 +4697,7 @@ const file_steward_core_v1_policy_proto_rawDesc = "" +
 	"\fDocumentType\x12\x1d\n" +
 	"\x19DOCUMENT_TYPE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14DOCUMENT_TYPE_POLICY\x10\x01\x12\x1b\n" +
-	"\x17DOCUMENT_TYPE_PROCEDURE\x10\x022\x81\x19\n" +
+	"\x17DOCUMENT_TYPE_PROCEDURE\x10\x022\xe4\x19\n" +
 	"\rPolicyService\x12[\n" +
 	"\fCreatePolicy\x12$.steward.core.v1.CreatePolicyRequest\x1a%.steward.core.v1.CreatePolicyResponse\x12R\n" +
 	"\tGetPolicy\x12!.steward.core.v1.GetPolicyRequest\x1a\".steward.core.v1.GetPolicyResponse\x12j\n" +
@@ -4388,7 +4730,8 @@ const file_steward_core_v1_policy_proto_rawDesc = "" +
 	"\x16ListObligatingPolicies\x12..steward.core.v1.ListObligatingPoliciesRequest\x1a/.steward.core.v1.ListObligatingPoliciesResponse\x12^\n" +
 	"\rReindexPolicy\x12%.steward.core.v1.ReindexPolicyRequest\x1a&.steward.core.v1.ReindexPolicyResponse\x12s\n" +
 	"\x14ReindexPolicyVersion\x12,.steward.core.v1.ReindexPolicyVersionRequest\x1a-.steward.core.v1.ReindexPolicyVersionResponse\x12p\n" +
-	"\x13ReindexAllPublished\x12+.steward.core.v1.ReindexAllPublishedRequest\x1a,.steward.core.v1.ReindexAllPublishedResponseBHZFgithub.com/Steward-GRC/steward-collab/gen/go/thirdparty/core/v1;corev1b\x06proto3"
+	"\x13ReindexAllPublished\x12+.steward.core.v1.ReindexAllPublishedRequest\x1a,.steward.core.v1.ReindexAllPublishedResponse\x12a\n" +
+	"\x0eSearchPolicies\x12&.steward.core.v1.SearchPoliciesRequest\x1a'.steward.core.v1.SearchPoliciesResponseBHZFgithub.com/Steward-GRC/steward-collab/gen/go/thirdparty/core/v1;corev1b\x06proto3"
 
 var (
 	file_steward_core_v1_policy_proto_rawDescOnce sync.Once
@@ -4403,7 +4746,7 @@ func file_steward_core_v1_policy_proto_rawDescGZIP() []byte {
 }
 
 var file_steward_core_v1_policy_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_steward_core_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 67)
+var file_steward_core_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 72)
 var file_steward_core_v1_policy_proto_goTypes = []any{
 	(PolicyVersionStatus)(0),                // 0: steward.core.v1.PolicyVersionStatus
 	(Sensitivity)(0),                        // 1: steward.core.v1.Sensitivity
@@ -4475,18 +4818,23 @@ var file_steward_core_v1_policy_proto_goTypes = []any{
 	(*ReindexPolicyVersionResponse)(nil),    // 67: steward.core.v1.ReindexPolicyVersionResponse
 	(*ReindexAllPublishedRequest)(nil),      // 68: steward.core.v1.ReindexAllPublishedRequest
 	(*ReindexAllPublishedResponse)(nil),     // 69: steward.core.v1.ReindexAllPublishedResponse
-	(AckTrigger)(0),                         // 70: steward.core.v1.AckTrigger
-	(*timestamppb.Timestamp)(nil),           // 71: google.protobuf.Timestamp
+	(*SearchPoliciesRequest)(nil),           // 70: steward.core.v1.SearchPoliciesRequest
+	(*SearchMatch)(nil),                     // 71: steward.core.v1.SearchMatch
+	(*PolicySearchSnippet)(nil),             // 72: steward.core.v1.PolicySearchSnippet
+	(*PolicySearchHit)(nil),                 // 73: steward.core.v1.PolicySearchHit
+	(*SearchPoliciesResponse)(nil),          // 74: steward.core.v1.SearchPoliciesResponse
+	(AckTrigger)(0),                         // 75: steward.core.v1.AckTrigger
+	(*timestamppb.Timestamp)(nil),           // 76: google.protobuf.Timestamp
 }
 var file_steward_core_v1_policy_proto_depIdxs = []int32{
 	1,  // 0: steward.core.v1.Policy.sensitivity:type_name -> steward.core.v1.Sensitivity
-	70, // 1: steward.core.v1.Policy.ack_triggers:type_name -> steward.core.v1.AckTrigger
+	75, // 1: steward.core.v1.Policy.ack_triggers:type_name -> steward.core.v1.AckTrigger
 	2,  // 2: steward.core.v1.Policy.document_type:type_name -> steward.core.v1.DocumentType
-	71, // 3: steward.core.v1.Policy.updated_at:type_name -> google.protobuf.Timestamp
+	76, // 3: steward.core.v1.Policy.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 4: steward.core.v1.Policy.current_version_status:type_name -> steward.core.v1.PolicyVersionStatus
 	0,  // 5: steward.core.v1.PolicyVersion.status:type_name -> steward.core.v1.PolicyVersionStatus
-	71, // 6: steward.core.v1.PolicyVersion.created_at:type_name -> google.protobuf.Timestamp
-	71, // 7: steward.core.v1.PolicyVersion.published_at:type_name -> google.protobuf.Timestamp
+	76, // 6: steward.core.v1.PolicyVersion.created_at:type_name -> google.protobuf.Timestamp
+	76, // 7: steward.core.v1.PolicyVersion.published_at:type_name -> google.protobuf.Timestamp
 	1,  // 8: steward.core.v1.CreatePolicyRequest.sensitivity:type_name -> steward.core.v1.Sensitivity
 	2,  // 9: steward.core.v1.CreatePolicyRequest.document_type:type_name -> steward.core.v1.DocumentType
 	3,  // 10: steward.core.v1.CreatePolicyResponse.policy:type_name -> steward.core.v1.Policy
@@ -4510,77 +4858,84 @@ var file_steward_core_v1_policy_proto_depIdxs = []int32{
 	1,  // 28: steward.core.v1.SetPolicySensitivityRequest.sensitivity:type_name -> steward.core.v1.Sensitivity
 	3,  // 29: steward.core.v1.SetPolicySensitivityResponse.policy:type_name -> steward.core.v1.Policy
 	3,  // 30: steward.core.v1.RenamePolicyResponse.policy:type_name -> steward.core.v1.Policy
-	70, // 31: steward.core.v1.SetAckRequest.ack_triggers:type_name -> steward.core.v1.AckTrigger
+	75, // 31: steward.core.v1.SetAckRequest.ack_triggers:type_name -> steward.core.v1.AckTrigger
 	3,  // 32: steward.core.v1.SetAckResponse.policy:type_name -> steward.core.v1.Policy
 	2,  // 33: steward.core.v1.ObligatingPolicy.document_type:type_name -> steward.core.v1.DocumentType
 	61, // 34: steward.core.v1.ListObligatingPoliciesResponse.policies:type_name -> steward.core.v1.ObligatingPolicy
-	6,  // 35: steward.core.v1.PolicyService.CreatePolicy:input_type -> steward.core.v1.CreatePolicyRequest
-	8,  // 36: steward.core.v1.PolicyService.GetPolicy:input_type -> steward.core.v1.GetPolicyRequest
-	10, // 37: steward.core.v1.PolicyService.GetPolicyByNumber:input_type -> steward.core.v1.GetPolicyByNumberRequest
-	12, // 38: steward.core.v1.PolicyService.ListPolicies:input_type -> steward.core.v1.ListPoliciesRequest
-	14, // 39: steward.core.v1.PolicyService.GetPolicyVersion:input_type -> steward.core.v1.GetPolicyVersionRequest
-	16, // 40: steward.core.v1.PolicyService.ListPolicyVersions:input_type -> steward.core.v1.ListPolicyVersionsRequest
-	18, // 41: steward.core.v1.PolicyService.SaveDraft:input_type -> steward.core.v1.SaveDraftRequest
-	20, // 42: steward.core.v1.PolicyService.PublishDraft:input_type -> steward.core.v1.PublishDraftRequest
-	22, // 43: steward.core.v1.PolicyService.DiscardDraft:input_type -> steward.core.v1.DiscardDraftRequest
-	24, // 44: steward.core.v1.PolicyService.DeletePolicy:input_type -> steward.core.v1.DeletePolicyRequest
-	26, // 45: steward.core.v1.PolicyService.RetirePolicy:input_type -> steward.core.v1.RetirePolicyRequest
-	28, // 46: steward.core.v1.PolicyService.RecordBreakGlassRead:input_type -> steward.core.v1.RecordBreakGlassReadRequest
-	30, // 47: steward.core.v1.PolicyService.SetVersionStatus:input_type -> steward.core.v1.SetVersionStatusRequest
-	32, // 48: steward.core.v1.PolicyService.SetPolicyOwner:input_type -> steward.core.v1.SetPolicyOwnerRequest
-	34, // 49: steward.core.v1.PolicyService.ListPoliciesByOwner:input_type -> steward.core.v1.ListPoliciesByOwnerRequest
-	36, // 50: steward.core.v1.PolicyService.ReassignUserPolicies:input_type -> steward.core.v1.ReassignUserPoliciesRequest
-	38, // 51: steward.core.v1.PolicyService.MovePolicy:input_type -> steward.core.v1.MovePolicyRequest
-	41, // 52: steward.core.v1.PolicyService.PreviewMovePolicies:input_type -> steward.core.v1.PreviewMovePoliciesRequest
-	43, // 53: steward.core.v1.PolicyService.MovePolicies:input_type -> steward.core.v1.MovePoliciesRequest
-	45, // 54: steward.core.v1.PolicyService.DiffVersions:input_type -> steward.core.v1.DiffVersionsRequest
-	47, // 55: steward.core.v1.PolicyService.GetEffectiveTemplate:input_type -> steward.core.v1.GetEffectiveTemplateRequest
-	49, // 56: steward.core.v1.PolicyService.SetPolicyTemplate:input_type -> steward.core.v1.SetPolicyTemplateRequest
-	51, // 57: steward.core.v1.PolicyService.SetPolicySensitivity:input_type -> steward.core.v1.SetPolicySensitivityRequest
-	53, // 58: steward.core.v1.PolicyService.RenamePolicy:input_type -> steward.core.v1.RenamePolicyRequest
-	55, // 59: steward.core.v1.PolicyService.UpdateDraftContent:input_type -> steward.core.v1.UpdateDraftContentRequest
-	57, // 60: steward.core.v1.PolicyService.SetAck:input_type -> steward.core.v1.SetAckRequest
-	59, // 61: steward.core.v1.PolicyService.ResolvePolicyObligation:input_type -> steward.core.v1.ResolvePolicyObligationRequest
-	62, // 62: steward.core.v1.PolicyService.ListObligatingPolicies:input_type -> steward.core.v1.ListObligatingPoliciesRequest
-	64, // 63: steward.core.v1.PolicyService.ReindexPolicy:input_type -> steward.core.v1.ReindexPolicyRequest
-	66, // 64: steward.core.v1.PolicyService.ReindexPolicyVersion:input_type -> steward.core.v1.ReindexPolicyVersionRequest
-	68, // 65: steward.core.v1.PolicyService.ReindexAllPublished:input_type -> steward.core.v1.ReindexAllPublishedRequest
-	7,  // 66: steward.core.v1.PolicyService.CreatePolicy:output_type -> steward.core.v1.CreatePolicyResponse
-	9,  // 67: steward.core.v1.PolicyService.GetPolicy:output_type -> steward.core.v1.GetPolicyResponse
-	11, // 68: steward.core.v1.PolicyService.GetPolicyByNumber:output_type -> steward.core.v1.GetPolicyByNumberResponse
-	13, // 69: steward.core.v1.PolicyService.ListPolicies:output_type -> steward.core.v1.ListPoliciesResponse
-	15, // 70: steward.core.v1.PolicyService.GetPolicyVersion:output_type -> steward.core.v1.GetPolicyVersionResponse
-	17, // 71: steward.core.v1.PolicyService.ListPolicyVersions:output_type -> steward.core.v1.ListPolicyVersionsResponse
-	19, // 72: steward.core.v1.PolicyService.SaveDraft:output_type -> steward.core.v1.SaveDraftResponse
-	21, // 73: steward.core.v1.PolicyService.PublishDraft:output_type -> steward.core.v1.PublishDraftResponse
-	23, // 74: steward.core.v1.PolicyService.DiscardDraft:output_type -> steward.core.v1.DiscardDraftResponse
-	25, // 75: steward.core.v1.PolicyService.DeletePolicy:output_type -> steward.core.v1.DeletePolicyResponse
-	27, // 76: steward.core.v1.PolicyService.RetirePolicy:output_type -> steward.core.v1.RetirePolicyResponse
-	29, // 77: steward.core.v1.PolicyService.RecordBreakGlassRead:output_type -> steward.core.v1.RecordBreakGlassReadResponse
-	31, // 78: steward.core.v1.PolicyService.SetVersionStatus:output_type -> steward.core.v1.SetVersionStatusResponse
-	33, // 79: steward.core.v1.PolicyService.SetPolicyOwner:output_type -> steward.core.v1.SetPolicyOwnerResponse
-	35, // 80: steward.core.v1.PolicyService.ListPoliciesByOwner:output_type -> steward.core.v1.ListPoliciesByOwnerResponse
-	37, // 81: steward.core.v1.PolicyService.ReassignUserPolicies:output_type -> steward.core.v1.ReassignUserPoliciesResponse
-	39, // 82: steward.core.v1.PolicyService.MovePolicy:output_type -> steward.core.v1.MovePolicyResponse
-	42, // 83: steward.core.v1.PolicyService.PreviewMovePolicies:output_type -> steward.core.v1.PreviewMovePoliciesResponse
-	44, // 84: steward.core.v1.PolicyService.MovePolicies:output_type -> steward.core.v1.MovePoliciesResponse
-	46, // 85: steward.core.v1.PolicyService.DiffVersions:output_type -> steward.core.v1.DiffVersionsResponse
-	48, // 86: steward.core.v1.PolicyService.GetEffectiveTemplate:output_type -> steward.core.v1.GetEffectiveTemplateResponse
-	50, // 87: steward.core.v1.PolicyService.SetPolicyTemplate:output_type -> steward.core.v1.SetPolicyTemplateResponse
-	52, // 88: steward.core.v1.PolicyService.SetPolicySensitivity:output_type -> steward.core.v1.SetPolicySensitivityResponse
-	54, // 89: steward.core.v1.PolicyService.RenamePolicy:output_type -> steward.core.v1.RenamePolicyResponse
-	56, // 90: steward.core.v1.PolicyService.UpdateDraftContent:output_type -> steward.core.v1.UpdateDraftContentResponse
-	58, // 91: steward.core.v1.PolicyService.SetAck:output_type -> steward.core.v1.SetAckResponse
-	60, // 92: steward.core.v1.PolicyService.ResolvePolicyObligation:output_type -> steward.core.v1.ResolvePolicyObligationResponse
-	63, // 93: steward.core.v1.PolicyService.ListObligatingPolicies:output_type -> steward.core.v1.ListObligatingPoliciesResponse
-	65, // 94: steward.core.v1.PolicyService.ReindexPolicy:output_type -> steward.core.v1.ReindexPolicyResponse
-	67, // 95: steward.core.v1.PolicyService.ReindexPolicyVersion:output_type -> steward.core.v1.ReindexPolicyVersionResponse
-	69, // 96: steward.core.v1.PolicyService.ReindexAllPublished:output_type -> steward.core.v1.ReindexAllPublishedResponse
-	66, // [66:97] is the sub-list for method output_type
-	35, // [35:66] is the sub-list for method input_type
-	35, // [35:35] is the sub-list for extension type_name
-	35, // [35:35] is the sub-list for extension extendee
-	0,  // [0:35] is the sub-list for field type_name
+	2,  // 35: steward.core.v1.SearchPoliciesRequest.document_type:type_name -> steward.core.v1.DocumentType
+	71, // 36: steward.core.v1.PolicySearchSnippet.matches:type_name -> steward.core.v1.SearchMatch
+	3,  // 37: steward.core.v1.PolicySearchHit.policy:type_name -> steward.core.v1.Policy
+	72, // 38: steward.core.v1.PolicySearchHit.snippet:type_name -> steward.core.v1.PolicySearchSnippet
+	73, // 39: steward.core.v1.SearchPoliciesResponse.hits:type_name -> steward.core.v1.PolicySearchHit
+	6,  // 40: steward.core.v1.PolicyService.CreatePolicy:input_type -> steward.core.v1.CreatePolicyRequest
+	8,  // 41: steward.core.v1.PolicyService.GetPolicy:input_type -> steward.core.v1.GetPolicyRequest
+	10, // 42: steward.core.v1.PolicyService.GetPolicyByNumber:input_type -> steward.core.v1.GetPolicyByNumberRequest
+	12, // 43: steward.core.v1.PolicyService.ListPolicies:input_type -> steward.core.v1.ListPoliciesRequest
+	14, // 44: steward.core.v1.PolicyService.GetPolicyVersion:input_type -> steward.core.v1.GetPolicyVersionRequest
+	16, // 45: steward.core.v1.PolicyService.ListPolicyVersions:input_type -> steward.core.v1.ListPolicyVersionsRequest
+	18, // 46: steward.core.v1.PolicyService.SaveDraft:input_type -> steward.core.v1.SaveDraftRequest
+	20, // 47: steward.core.v1.PolicyService.PublishDraft:input_type -> steward.core.v1.PublishDraftRequest
+	22, // 48: steward.core.v1.PolicyService.DiscardDraft:input_type -> steward.core.v1.DiscardDraftRequest
+	24, // 49: steward.core.v1.PolicyService.DeletePolicy:input_type -> steward.core.v1.DeletePolicyRequest
+	26, // 50: steward.core.v1.PolicyService.RetirePolicy:input_type -> steward.core.v1.RetirePolicyRequest
+	28, // 51: steward.core.v1.PolicyService.RecordBreakGlassRead:input_type -> steward.core.v1.RecordBreakGlassReadRequest
+	30, // 52: steward.core.v1.PolicyService.SetVersionStatus:input_type -> steward.core.v1.SetVersionStatusRequest
+	32, // 53: steward.core.v1.PolicyService.SetPolicyOwner:input_type -> steward.core.v1.SetPolicyOwnerRequest
+	34, // 54: steward.core.v1.PolicyService.ListPoliciesByOwner:input_type -> steward.core.v1.ListPoliciesByOwnerRequest
+	36, // 55: steward.core.v1.PolicyService.ReassignUserPolicies:input_type -> steward.core.v1.ReassignUserPoliciesRequest
+	38, // 56: steward.core.v1.PolicyService.MovePolicy:input_type -> steward.core.v1.MovePolicyRequest
+	41, // 57: steward.core.v1.PolicyService.PreviewMovePolicies:input_type -> steward.core.v1.PreviewMovePoliciesRequest
+	43, // 58: steward.core.v1.PolicyService.MovePolicies:input_type -> steward.core.v1.MovePoliciesRequest
+	45, // 59: steward.core.v1.PolicyService.DiffVersions:input_type -> steward.core.v1.DiffVersionsRequest
+	47, // 60: steward.core.v1.PolicyService.GetEffectiveTemplate:input_type -> steward.core.v1.GetEffectiveTemplateRequest
+	49, // 61: steward.core.v1.PolicyService.SetPolicyTemplate:input_type -> steward.core.v1.SetPolicyTemplateRequest
+	51, // 62: steward.core.v1.PolicyService.SetPolicySensitivity:input_type -> steward.core.v1.SetPolicySensitivityRequest
+	53, // 63: steward.core.v1.PolicyService.RenamePolicy:input_type -> steward.core.v1.RenamePolicyRequest
+	55, // 64: steward.core.v1.PolicyService.UpdateDraftContent:input_type -> steward.core.v1.UpdateDraftContentRequest
+	57, // 65: steward.core.v1.PolicyService.SetAck:input_type -> steward.core.v1.SetAckRequest
+	59, // 66: steward.core.v1.PolicyService.ResolvePolicyObligation:input_type -> steward.core.v1.ResolvePolicyObligationRequest
+	62, // 67: steward.core.v1.PolicyService.ListObligatingPolicies:input_type -> steward.core.v1.ListObligatingPoliciesRequest
+	64, // 68: steward.core.v1.PolicyService.ReindexPolicy:input_type -> steward.core.v1.ReindexPolicyRequest
+	66, // 69: steward.core.v1.PolicyService.ReindexPolicyVersion:input_type -> steward.core.v1.ReindexPolicyVersionRequest
+	68, // 70: steward.core.v1.PolicyService.ReindexAllPublished:input_type -> steward.core.v1.ReindexAllPublishedRequest
+	70, // 71: steward.core.v1.PolicyService.SearchPolicies:input_type -> steward.core.v1.SearchPoliciesRequest
+	7,  // 72: steward.core.v1.PolicyService.CreatePolicy:output_type -> steward.core.v1.CreatePolicyResponse
+	9,  // 73: steward.core.v1.PolicyService.GetPolicy:output_type -> steward.core.v1.GetPolicyResponse
+	11, // 74: steward.core.v1.PolicyService.GetPolicyByNumber:output_type -> steward.core.v1.GetPolicyByNumberResponse
+	13, // 75: steward.core.v1.PolicyService.ListPolicies:output_type -> steward.core.v1.ListPoliciesResponse
+	15, // 76: steward.core.v1.PolicyService.GetPolicyVersion:output_type -> steward.core.v1.GetPolicyVersionResponse
+	17, // 77: steward.core.v1.PolicyService.ListPolicyVersions:output_type -> steward.core.v1.ListPolicyVersionsResponse
+	19, // 78: steward.core.v1.PolicyService.SaveDraft:output_type -> steward.core.v1.SaveDraftResponse
+	21, // 79: steward.core.v1.PolicyService.PublishDraft:output_type -> steward.core.v1.PublishDraftResponse
+	23, // 80: steward.core.v1.PolicyService.DiscardDraft:output_type -> steward.core.v1.DiscardDraftResponse
+	25, // 81: steward.core.v1.PolicyService.DeletePolicy:output_type -> steward.core.v1.DeletePolicyResponse
+	27, // 82: steward.core.v1.PolicyService.RetirePolicy:output_type -> steward.core.v1.RetirePolicyResponse
+	29, // 83: steward.core.v1.PolicyService.RecordBreakGlassRead:output_type -> steward.core.v1.RecordBreakGlassReadResponse
+	31, // 84: steward.core.v1.PolicyService.SetVersionStatus:output_type -> steward.core.v1.SetVersionStatusResponse
+	33, // 85: steward.core.v1.PolicyService.SetPolicyOwner:output_type -> steward.core.v1.SetPolicyOwnerResponse
+	35, // 86: steward.core.v1.PolicyService.ListPoliciesByOwner:output_type -> steward.core.v1.ListPoliciesByOwnerResponse
+	37, // 87: steward.core.v1.PolicyService.ReassignUserPolicies:output_type -> steward.core.v1.ReassignUserPoliciesResponse
+	39, // 88: steward.core.v1.PolicyService.MovePolicy:output_type -> steward.core.v1.MovePolicyResponse
+	42, // 89: steward.core.v1.PolicyService.PreviewMovePolicies:output_type -> steward.core.v1.PreviewMovePoliciesResponse
+	44, // 90: steward.core.v1.PolicyService.MovePolicies:output_type -> steward.core.v1.MovePoliciesResponse
+	46, // 91: steward.core.v1.PolicyService.DiffVersions:output_type -> steward.core.v1.DiffVersionsResponse
+	48, // 92: steward.core.v1.PolicyService.GetEffectiveTemplate:output_type -> steward.core.v1.GetEffectiveTemplateResponse
+	50, // 93: steward.core.v1.PolicyService.SetPolicyTemplate:output_type -> steward.core.v1.SetPolicyTemplateResponse
+	52, // 94: steward.core.v1.PolicyService.SetPolicySensitivity:output_type -> steward.core.v1.SetPolicySensitivityResponse
+	54, // 95: steward.core.v1.PolicyService.RenamePolicy:output_type -> steward.core.v1.RenamePolicyResponse
+	56, // 96: steward.core.v1.PolicyService.UpdateDraftContent:output_type -> steward.core.v1.UpdateDraftContentResponse
+	58, // 97: steward.core.v1.PolicyService.SetAck:output_type -> steward.core.v1.SetAckResponse
+	60, // 98: steward.core.v1.PolicyService.ResolvePolicyObligation:output_type -> steward.core.v1.ResolvePolicyObligationResponse
+	63, // 99: steward.core.v1.PolicyService.ListObligatingPolicies:output_type -> steward.core.v1.ListObligatingPoliciesResponse
+	65, // 100: steward.core.v1.PolicyService.ReindexPolicy:output_type -> steward.core.v1.ReindexPolicyResponse
+	67, // 101: steward.core.v1.PolicyService.ReindexPolicyVersion:output_type -> steward.core.v1.ReindexPolicyVersionResponse
+	69, // 102: steward.core.v1.PolicyService.ReindexAllPublished:output_type -> steward.core.v1.ReindexAllPublishedResponse
+	74, // 103: steward.core.v1.PolicyService.SearchPolicies:output_type -> steward.core.v1.SearchPoliciesResponse
+	72, // [72:104] is the sub-list for method output_type
+	40, // [40:72] is the sub-list for method input_type
+	40, // [40:40] is the sub-list for extension type_name
+	40, // [40:40] is the sub-list for extension extendee
+	0,  // [0:40] is the sub-list for field type_name
 }
 
 func init() { file_steward_core_v1_policy_proto_init() }
@@ -4595,7 +4950,7 @@ func file_steward_core_v1_policy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_steward_core_v1_policy_proto_rawDesc), len(file_steward_core_v1_policy_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   67,
+			NumMessages:   72,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

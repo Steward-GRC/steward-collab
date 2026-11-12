@@ -139,7 +139,7 @@ func run(ctx context.Context, logger log.Logger) error {
 	if err != nil {
 		return fmt.Errorf("readiness: %w", err)
 	}
-	mux, err := httpMux(ws.NewHandler(hub, string(cfg.TokenSecret), logger).WithAllowedOrigins(cfg.AllowedOrigins), checker)
+	mux, err := httpMux(ws.NewHandler(hub, string(cfg.TokenSecret), logger).WithAllowedOrigins(cfg.AllowedOrigins).WithEditCheck(edit), checker)
 	if err != nil {
 		return err
 	}

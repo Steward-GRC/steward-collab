@@ -36,6 +36,7 @@ const (
 	CategoryService_SetGovernance_FullMethodName            = "/steward.core.v1.CategoryService/SetGovernance"
 	CategoryService_GetEffectiveGovernance_FullMethodName   = "/steward.core.v1.CategoryService/GetEffectiveGovernance"
 	CategoryService_GetCategoryRuleset_FullMethodName       = "/steward.core.v1.CategoryService/GetCategoryRuleset"
+	CategoryService_GetEffectiveRuleset_FullMethodName      = "/steward.core.v1.CategoryService/GetEffectiveRuleset"
 	CategoryService_SetCategoryRuleset_FullMethodName       = "/steward.core.v1.CategoryService/SetCategoryRuleset"
 	CategoryService_PurgeUserCategoryRules_FullMethodName   = "/steward.core.v1.CategoryService/PurgeUserCategoryRules"
 )
@@ -68,6 +69,11 @@ type CategoryServiceClient interface {
 	SetGovernance(ctx context.Context, in *SetGovernanceRequest, opts ...grpc.CallOption) (*SetGovernanceResponse, error)
 	GetEffectiveGovernance(ctx context.Context, in *GetEffectiveGovernanceRequest, opts ...grpc.CallOption) (*GetEffectiveGovernanceResponse, error)
 	GetCategoryRuleset(ctx context.Context, in *GetCategoryRulesetRequest, opts ...grpc.CallOption) (*GetCategoryRulesetResponse, error)
+	// GetEffectiveRuleset returns the category and each ancestor up to the
+	// top-level one, nearest first, with every level's owners and ordered rules
+	// (all five cells), read in one snapshot. It evaluates nothing: the access
+	// engine decides from these inputs. NOT_FOUND for an unknown category.
+	GetEffectiveRuleset(ctx context.Context, in *GetEffectiveRulesetRequest, opts ...grpc.CallOption) (*GetEffectiveRulesetResponse, error)
 	// SetCategoryRuleset replaces a category's rules. They are validated with
 	// the steward-authz rule type first.
 	SetCategoryRuleset(ctx context.Context, in *SetCategoryRulesetRequest, opts ...grpc.CallOption) (*SetCategoryRulesetResponse, error)
@@ -226,6 +232,16 @@ func (c *categoryServiceClient) GetCategoryRuleset(ctx context.Context, in *GetC
 	return out, nil
 }
 
+func (c *categoryServiceClient) GetEffectiveRuleset(ctx context.Context, in *GetEffectiveRulesetRequest, opts ...grpc.CallOption) (*GetEffectiveRulesetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetEffectiveRulesetResponse)
+	err := c.cc.Invoke(ctx, CategoryService_GetEffectiveRuleset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *categoryServiceClient) SetCategoryRuleset(ctx context.Context, in *SetCategoryRulesetRequest, opts ...grpc.CallOption) (*SetCategoryRulesetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SetCategoryRulesetResponse)
@@ -274,6 +290,11 @@ type CategoryServiceServer interface {
 	SetGovernance(context.Context, *SetGovernanceRequest) (*SetGovernanceResponse, error)
 	GetEffectiveGovernance(context.Context, *GetEffectiveGovernanceRequest) (*GetEffectiveGovernanceResponse, error)
 	GetCategoryRuleset(context.Context, *GetCategoryRulesetRequest) (*GetCategoryRulesetResponse, error)
+	// GetEffectiveRuleset returns the category and each ancestor up to the
+	// top-level one, nearest first, with every level's owners and ordered rules
+	// (all five cells), read in one snapshot. It evaluates nothing: the access
+	// engine decides from these inputs. NOT_FOUND for an unknown category.
+	GetEffectiveRuleset(context.Context, *GetEffectiveRulesetRequest) (*GetEffectiveRulesetResponse, error)
 	// SetCategoryRuleset replaces a category's rules. They are validated with
 	// the steward-authz rule type first.
 	SetCategoryRuleset(context.Context, *SetCategoryRulesetRequest) (*SetCategoryRulesetResponse, error)
@@ -333,6 +354,9 @@ func (UnimplementedCategoryServiceServer) GetEffectiveGovernance(context.Context
 }
 func (UnimplementedCategoryServiceServer) GetCategoryRuleset(context.Context, *GetCategoryRulesetRequest) (*GetCategoryRulesetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetCategoryRuleset not implemented")
+}
+func (UnimplementedCategoryServiceServer) GetEffectiveRuleset(context.Context, *GetEffectiveRulesetRequest) (*GetEffectiveRulesetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetEffectiveRuleset not implemented")
 }
 func (UnimplementedCategoryServiceServer) SetCategoryRuleset(context.Context, *SetCategoryRulesetRequest) (*SetCategoryRulesetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetCategoryRuleset not implemented")
@@ -613,6 +637,24 @@ func _CategoryService_GetCategoryRuleset_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CategoryService_GetEffectiveRuleset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEffectiveRulesetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CategoryServiceServer).GetEffectiveRuleset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CategoryService_GetEffectiveRuleset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CategoryServiceServer).GetEffectiveRuleset(ctx, req.(*GetEffectiveRulesetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CategoryService_SetCategoryRuleset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetCategoryRulesetRequest)
 	if err := dec(in); err != nil {
@@ -711,6 +753,10 @@ var CategoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCategoryRuleset",
 			Handler:    _CategoryService_GetCategoryRuleset_Handler,
+		},
+		{
+			MethodName: "GetEffectiveRuleset",
+			Handler:    _CategoryService_GetEffectiveRuleset_Handler,
 		},
 		{
 			MethodName: "SetCategoryRuleset",
