@@ -22,38 +22,40 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PolicyService_CreatePolicy_FullMethodName            = "/steward.core.v1.PolicyService/CreatePolicy"
-	PolicyService_GetPolicy_FullMethodName               = "/steward.core.v1.PolicyService/GetPolicy"
-	PolicyService_GetPolicyByNumber_FullMethodName       = "/steward.core.v1.PolicyService/GetPolicyByNumber"
-	PolicyService_ListPolicies_FullMethodName            = "/steward.core.v1.PolicyService/ListPolicies"
-	PolicyService_GetPolicyVersion_FullMethodName        = "/steward.core.v1.PolicyService/GetPolicyVersion"
-	PolicyService_ListPolicyVersions_FullMethodName      = "/steward.core.v1.PolicyService/ListPolicyVersions"
-	PolicyService_SaveDraft_FullMethodName               = "/steward.core.v1.PolicyService/SaveDraft"
-	PolicyService_PublishDraft_FullMethodName            = "/steward.core.v1.PolicyService/PublishDraft"
-	PolicyService_DiscardDraft_FullMethodName            = "/steward.core.v1.PolicyService/DiscardDraft"
-	PolicyService_DeletePolicy_FullMethodName            = "/steward.core.v1.PolicyService/DeletePolicy"
-	PolicyService_RetirePolicy_FullMethodName            = "/steward.core.v1.PolicyService/RetirePolicy"
-	PolicyService_RecordBreakGlassRead_FullMethodName    = "/steward.core.v1.PolicyService/RecordBreakGlassRead"
-	PolicyService_SetVersionStatus_FullMethodName        = "/steward.core.v1.PolicyService/SetVersionStatus"
-	PolicyService_SetPolicyOwner_FullMethodName          = "/steward.core.v1.PolicyService/SetPolicyOwner"
-	PolicyService_ListPoliciesByOwner_FullMethodName     = "/steward.core.v1.PolicyService/ListPoliciesByOwner"
-	PolicyService_ReassignUserPolicies_FullMethodName    = "/steward.core.v1.PolicyService/ReassignUserPolicies"
-	PolicyService_MovePolicy_FullMethodName              = "/steward.core.v1.PolicyService/MovePolicy"
-	PolicyService_PreviewMovePolicies_FullMethodName     = "/steward.core.v1.PolicyService/PreviewMovePolicies"
-	PolicyService_MovePolicies_FullMethodName            = "/steward.core.v1.PolicyService/MovePolicies"
-	PolicyService_DiffVersions_FullMethodName            = "/steward.core.v1.PolicyService/DiffVersions"
-	PolicyService_GetEffectiveTemplate_FullMethodName    = "/steward.core.v1.PolicyService/GetEffectiveTemplate"
-	PolicyService_SetPolicyTemplate_FullMethodName       = "/steward.core.v1.PolicyService/SetPolicyTemplate"
-	PolicyService_SetPolicySensitivity_FullMethodName    = "/steward.core.v1.PolicyService/SetPolicySensitivity"
-	PolicyService_RenamePolicy_FullMethodName            = "/steward.core.v1.PolicyService/RenamePolicy"
-	PolicyService_UpdateDraftContent_FullMethodName      = "/steward.core.v1.PolicyService/UpdateDraftContent"
-	PolicyService_SetAck_FullMethodName                  = "/steward.core.v1.PolicyService/SetAck"
-	PolicyService_ResolvePolicyObligation_FullMethodName = "/steward.core.v1.PolicyService/ResolvePolicyObligation"
-	PolicyService_ListObligatingPolicies_FullMethodName  = "/steward.core.v1.PolicyService/ListObligatingPolicies"
-	PolicyService_ReindexPolicy_FullMethodName           = "/steward.core.v1.PolicyService/ReindexPolicy"
-	PolicyService_ReindexPolicyVersion_FullMethodName    = "/steward.core.v1.PolicyService/ReindexPolicyVersion"
-	PolicyService_ReindexAllPublished_FullMethodName     = "/steward.core.v1.PolicyService/ReindexAllPublished"
-	PolicyService_SearchPolicies_FullMethodName          = "/steward.core.v1.PolicyService/SearchPolicies"
+	PolicyService_CreatePolicy_FullMethodName              = "/steward.core.v1.PolicyService/CreatePolicy"
+	PolicyService_GetPolicy_FullMethodName                 = "/steward.core.v1.PolicyService/GetPolicy"
+	PolicyService_GetPolicyByNumber_FullMethodName         = "/steward.core.v1.PolicyService/GetPolicyByNumber"
+	PolicyService_ListPolicies_FullMethodName              = "/steward.core.v1.PolicyService/ListPolicies"
+	PolicyService_GetPolicyVersion_FullMethodName          = "/steward.core.v1.PolicyService/GetPolicyVersion"
+	PolicyService_ListPolicyVersions_FullMethodName        = "/steward.core.v1.PolicyService/ListPolicyVersions"
+	PolicyService_SaveDraft_FullMethodName                 = "/steward.core.v1.PolicyService/SaveDraft"
+	PolicyService_PublishDraft_FullMethodName              = "/steward.core.v1.PolicyService/PublishDraft"
+	PolicyService_DiscardDraft_FullMethodName              = "/steward.core.v1.PolicyService/DiscardDraft"
+	PolicyService_DeletePolicy_FullMethodName              = "/steward.core.v1.PolicyService/DeletePolicy"
+	PolicyService_RetirePolicy_FullMethodName              = "/steward.core.v1.PolicyService/RetirePolicy"
+	PolicyService_RecordBreakGlassRead_FullMethodName      = "/steward.core.v1.PolicyService/RecordBreakGlassRead"
+	PolicyService_SetVersionStatus_FullMethodName          = "/steward.core.v1.PolicyService/SetVersionStatus"
+	PolicyService_SetVersionChangeType_FullMethodName      = "/steward.core.v1.PolicyService/SetVersionChangeType"
+	PolicyService_RecordChangeTypeAgreement_FullMethodName = "/steward.core.v1.PolicyService/RecordChangeTypeAgreement"
+	PolicyService_SetPolicyOwner_FullMethodName            = "/steward.core.v1.PolicyService/SetPolicyOwner"
+	PolicyService_ListPoliciesByOwner_FullMethodName       = "/steward.core.v1.PolicyService/ListPoliciesByOwner"
+	PolicyService_ReassignUserPolicies_FullMethodName      = "/steward.core.v1.PolicyService/ReassignUserPolicies"
+	PolicyService_MovePolicy_FullMethodName                = "/steward.core.v1.PolicyService/MovePolicy"
+	PolicyService_PreviewMovePolicies_FullMethodName       = "/steward.core.v1.PolicyService/PreviewMovePolicies"
+	PolicyService_MovePolicies_FullMethodName              = "/steward.core.v1.PolicyService/MovePolicies"
+	PolicyService_DiffVersions_FullMethodName              = "/steward.core.v1.PolicyService/DiffVersions"
+	PolicyService_GetEffectiveTemplate_FullMethodName      = "/steward.core.v1.PolicyService/GetEffectiveTemplate"
+	PolicyService_SetPolicyTemplate_FullMethodName         = "/steward.core.v1.PolicyService/SetPolicyTemplate"
+	PolicyService_SetPolicySensitivity_FullMethodName      = "/steward.core.v1.PolicyService/SetPolicySensitivity"
+	PolicyService_RenamePolicy_FullMethodName              = "/steward.core.v1.PolicyService/RenamePolicy"
+	PolicyService_UpdateDraftContent_FullMethodName        = "/steward.core.v1.PolicyService/UpdateDraftContent"
+	PolicyService_SetAck_FullMethodName                    = "/steward.core.v1.PolicyService/SetAck"
+	PolicyService_ResolvePolicyObligation_FullMethodName   = "/steward.core.v1.PolicyService/ResolvePolicyObligation"
+	PolicyService_ListObligatingPolicies_FullMethodName    = "/steward.core.v1.PolicyService/ListObligatingPolicies"
+	PolicyService_ReindexPolicy_FullMethodName             = "/steward.core.v1.PolicyService/ReindexPolicy"
+	PolicyService_ReindexPolicyVersion_FullMethodName      = "/steward.core.v1.PolicyService/ReindexPolicyVersion"
+	PolicyService_ReindexAllPublished_FullMethodName       = "/steward.core.v1.PolicyService/ReindexAllPublished"
+	PolicyService_SearchPolicies_FullMethodName            = "/steward.core.v1.PolicyService/SearchPolicies"
 )
 
 // PolicyServiceClient is the client API for PolicyService service.
@@ -81,6 +83,8 @@ type PolicyServiceClient interface {
 	RecordBreakGlassRead(ctx context.Context, in *RecordBreakGlassReadRequest, opts ...grpc.CallOption) (*RecordBreakGlassReadResponse, error)
 	// SetVersionStatus is how workflow writes an approval outcome back.
 	SetVersionStatus(ctx context.Context, in *SetVersionStatusRequest, opts ...grpc.CallOption) (*SetVersionStatusResponse, error)
+	SetVersionChangeType(ctx context.Context, in *SetVersionChangeTypeRequest, opts ...grpc.CallOption) (*SetVersionChangeTypeResponse, error)
+	RecordChangeTypeAgreement(ctx context.Context, in *RecordChangeTypeAgreementRequest, opts ...grpc.CallOption) (*RecordChangeTypeAgreementResponse, error)
 	SetPolicyOwner(ctx context.Context, in *SetPolicyOwnerRequest, opts ...grpc.CallOption) (*SetPolicyOwnerResponse, error)
 	ListPoliciesByOwner(ctx context.Context, in *ListPoliciesByOwnerRequest, opts ...grpc.CallOption) (*ListPoliciesByOwnerResponse, error)
 	ReassignUserPolicies(ctx context.Context, in *ReassignUserPoliciesRequest, opts ...grpc.CallOption) (*ReassignUserPoliciesResponse, error)
@@ -243,6 +247,26 @@ func (c *policyServiceClient) SetVersionStatus(ctx context.Context, in *SetVersi
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SetVersionStatusResponse)
 	err := c.cc.Invoke(ctx, PolicyService_SetVersionStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) SetVersionChangeType(ctx context.Context, in *SetVersionChangeTypeRequest, opts ...grpc.CallOption) (*SetVersionChangeTypeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetVersionChangeTypeResponse)
+	err := c.cc.Invoke(ctx, PolicyService_SetVersionChangeType_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *policyServiceClient) RecordChangeTypeAgreement(ctx context.Context, in *RecordChangeTypeAgreementRequest, opts ...grpc.CallOption) (*RecordChangeTypeAgreementResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecordChangeTypeAgreementResponse)
+	err := c.cc.Invoke(ctx, PolicyService_RecordChangeTypeAgreement_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -464,6 +488,8 @@ type PolicyServiceServer interface {
 	RecordBreakGlassRead(context.Context, *RecordBreakGlassReadRequest) (*RecordBreakGlassReadResponse, error)
 	// SetVersionStatus is how workflow writes an approval outcome back.
 	SetVersionStatus(context.Context, *SetVersionStatusRequest) (*SetVersionStatusResponse, error)
+	SetVersionChangeType(context.Context, *SetVersionChangeTypeRequest) (*SetVersionChangeTypeResponse, error)
+	RecordChangeTypeAgreement(context.Context, *RecordChangeTypeAgreementRequest) (*RecordChangeTypeAgreementResponse, error)
 	SetPolicyOwner(context.Context, *SetPolicyOwnerRequest) (*SetPolicyOwnerResponse, error)
 	ListPoliciesByOwner(context.Context, *ListPoliciesByOwnerRequest) (*ListPoliciesByOwnerResponse, error)
 	ReassignUserPolicies(context.Context, *ReassignUserPoliciesRequest) (*ReassignUserPoliciesResponse, error)
@@ -540,6 +566,12 @@ func (UnimplementedPolicyServiceServer) RecordBreakGlassRead(context.Context, *R
 }
 func (UnimplementedPolicyServiceServer) SetVersionStatus(context.Context, *SetVersionStatusRequest) (*SetVersionStatusResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetVersionStatus not implemented")
+}
+func (UnimplementedPolicyServiceServer) SetVersionChangeType(context.Context, *SetVersionChangeTypeRequest) (*SetVersionChangeTypeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetVersionChangeType not implemented")
+}
+func (UnimplementedPolicyServiceServer) RecordChangeTypeAgreement(context.Context, *RecordChangeTypeAgreementRequest) (*RecordChangeTypeAgreementResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecordChangeTypeAgreement not implemented")
 }
 func (UnimplementedPolicyServiceServer) SetPolicyOwner(context.Context, *SetPolicyOwnerRequest) (*SetPolicyOwnerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetPolicyOwner not implemented")
@@ -849,6 +881,42 @@ func _PolicyService_SetVersionStatus_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PolicyServiceServer).SetVersionStatus(ctx, req.(*SetVersionStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_SetVersionChangeType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetVersionChangeTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).SetVersionChangeType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_SetVersionChangeType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).SetVersionChangeType(ctx, req.(*SetVersionChangeTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PolicyService_RecordChangeTypeAgreement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordChangeTypeAgreementRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyServiceServer).RecordChangeTypeAgreement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyService_RecordChangeTypeAgreement_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyServiceServer).RecordChangeTypeAgreement(ctx, req.(*RecordChangeTypeAgreementRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1253,6 +1321,14 @@ var PolicyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetVersionStatus",
 			Handler:    _PolicyService_SetVersionStatus_Handler,
+		},
+		{
+			MethodName: "SetVersionChangeType",
+			Handler:    _PolicyService_SetVersionChangeType_Handler,
+		},
+		{
+			MethodName: "RecordChangeTypeAgreement",
+			Handler:    _PolicyService_RecordChangeTypeAgreement_Handler,
 		},
 		{
 			MethodName: "SetPolicyOwner",

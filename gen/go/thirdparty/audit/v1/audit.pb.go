@@ -213,7 +213,7 @@ func (x *AuditEvent) GetVersionNumber() int32 {
 type RequesterIdentity struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// The caller's global roles, as steward-authz catalog role names
+	// The caller's global roles, as permission catalog role names
 	// ("compliance-admin", "site-admin"). A role that holds audit.read reads
 	// every group; names the catalog doesn't know grant nothing.
 	Roles []string `protobuf:"bytes,2,rep,name=roles,proto3" json:"roles,omitempty"`
