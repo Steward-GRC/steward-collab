@@ -75,7 +75,7 @@ type CategoryServiceClient interface {
 	// engine decides from these inputs. NOT_FOUND for an unknown category.
 	GetEffectiveRuleset(ctx context.Context, in *GetEffectiveRulesetRequest, opts ...grpc.CallOption) (*GetEffectiveRulesetResponse, error)
 	// SetCategoryRuleset replaces a category's rules. They are validated with
-	// the steward-authz rule type first.
+	// the go-authz ordered rule model first.
 	SetCategoryRuleset(ctx context.Context, in *SetCategoryRulesetRequest, opts ...grpc.CallOption) (*SetCategoryRulesetResponse, error)
 	// PurgeUserCategoryRules removes every user-subject rule naming a user,
 	// across all categories, in one audited transaction, so a deleted account
@@ -296,7 +296,7 @@ type CategoryServiceServer interface {
 	// engine decides from these inputs. NOT_FOUND for an unknown category.
 	GetEffectiveRuleset(context.Context, *GetEffectiveRulesetRequest) (*GetEffectiveRulesetResponse, error)
 	// SetCategoryRuleset replaces a category's rules. They are validated with
-	// the steward-authz rule type first.
+	// the go-authz ordered rule model first.
 	SetCategoryRuleset(context.Context, *SetCategoryRulesetRequest) (*SetCategoryRulesetResponse, error)
 	// PurgeUserCategoryRules removes every user-subject rule naming a user,
 	// across all categories, in one audited transaction, so a deleted account

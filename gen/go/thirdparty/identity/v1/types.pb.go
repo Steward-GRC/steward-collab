@@ -324,7 +324,7 @@ type HardResetState int32
 
 const (
 	HardResetState_HARD_RESET_STATE_UNSPECIFIED HardResetState = 0
-	// Waiting for a second root admin.
+	// Waiting for a different site-admin to approve.
 	HardResetState_HARD_RESET_STATE_PENDING HardResetState = 1
 	// Approved; usable once until approval_expires_at.
 	HardResetState_HARD_RESET_STATE_APPROVED HardResetState = 2
@@ -878,7 +878,10 @@ type Session struct {
 	ClientIp string `protobuf:"bytes,8,opt,name=client_ip,json=clientIp,proto3" json:"client_ip,omitempty"`
 	// RFC 3339 time the session was last used for an authenticated request, to
 	// within the throttle window; empty when it was never seen.
-	LastSeenAt    string `protobuf:"bytes,9,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
+	LastSeenAt string `protobuf:"bytes,9,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
+	// True on the session a ListMySessions call runs on; never set by the admin
+	// listing.
+	Current       bool `protobuf:"varint,10,opt,name=current,proto3" json:"current,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -974,6 +977,13 @@ func (x *Session) GetLastSeenAt() string {
 		return x.LastSeenAt
 	}
 	return ""
+}
+
+func (x *Session) GetCurrent() bool {
+	if x != nil {
+		return x.Current
+	}
+	return false
 }
 
 // UserFactor is one second factor a user can satisfy.
@@ -2143,7 +2153,7 @@ func (x *SPCertificate) GetActive() bool {
 	return false
 }
 
-// HardResetRequest is one two-person hard reset of a module. Times are RFC
+// HardResetRequest is one four-eyes hard reset of a module. Times are RFC
 // 3339; an empty time hasn't happened.
 type HardResetRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
@@ -2156,7 +2166,7 @@ type HardResetRequest struct {
 	RequestedAt string `protobuf:"bytes,6,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"`
 	// The request must be approved before this.
 	ExpiresAt string `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	// The approving root admin's user id.
+	// The approving site-admin's user id: never the requester.
 	ApprovedBy string `protobuf:"bytes,8,opt,name=approved_by,json=approvedBy,proto3" json:"approved_by,omitempty"`
 	ApprovedAt string `protobuf:"bytes,9,opt,name=approved_at,json=approvedAt,proto3" json:"approved_at,omitempty"`
 	// The approval must be used before this.
@@ -2340,7 +2350,7 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"\bcategory\x18\x02 \x01(\tR\bcategory\"r\n" +
 	"\x0ePolicyOverride\x12#\n" +
 	"\rpolicy_number\x18\x01 \x01(\tR\fpolicyNumber\x12;\n" +
-	"\x06effect\x18\x02 \x01(\x0e2#.steward.identity.v1.OverrideEffectR\x06effect\"\x9e\x02\n" +
+	"\x06effect\x18\x02 \x01(\x0e2#.steward.identity.v1.OverrideEffectR\x06effect\"\xb8\x02\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
@@ -2354,7 +2364,9 @@ const file_steward_identity_v1_types_proto_rawDesc = "" +
 	"user_agent\x18\a \x01(\tR\tuserAgent\x12\x1b\n" +
 	"\tclient_ip\x18\b \x01(\tR\bclientIp\x12 \n" +
 	"\flast_seen_at\x18\t \x01(\tR\n" +
-	"lastSeenAt\"g\n" +
+	"lastSeenAt\x12\x18\n" +
+	"\acurrent\x18\n" +
+	" \x01(\bR\acurrent\"g\n" +
 	"\n" +
 	"UserFactor\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1f\n" +

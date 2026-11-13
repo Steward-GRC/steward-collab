@@ -32,6 +32,7 @@ const (
 	PolicyAppendixService_ReorderPolicyAppendices_FullMethodName = "/steward.core.v1.PolicyAppendixService/ReorderPolicyAppendices"
 	PolicyAppendixService_CheckpointAppendixDraft_FullMethodName = "/steward.core.v1.PolicyAppendixService/CheckpointAppendixDraft"
 	PolicyAppendixService_DiffPolicyAppendix_FullMethodName      = "/steward.core.v1.PolicyAppendixService/DiffPolicyAppendix"
+	PolicyAppendixService_DeletePolicyAppendix_FullMethodName    = "/steward.core.v1.PolicyAppendixService/DeletePolicyAppendix"
 )
 
 // PolicyAppendixServiceClient is the client API for PolicyAppendixService service.
@@ -50,6 +51,8 @@ type PolicyAppendixServiceClient interface {
 	ReorderPolicyAppendices(ctx context.Context, in *ReorderPolicyAppendicesRequest, opts ...grpc.CallOption) (*ReorderPolicyAppendicesResponse, error)
 	CheckpointAppendixDraft(ctx context.Context, in *CheckpointAppendixDraftRequest, opts ...grpc.CallOption) (*CheckpointAppendixDraftResponse, error)
 	DiffPolicyAppendix(ctx context.Context, in *DiffPolicyAppendixRequest, opts ...grpc.CallOption) (*DiffPolicyAppendixResponse, error)
+	// Removes a retired appendix, its versions and its history for good.
+	DeletePolicyAppendix(ctx context.Context, in *DeletePolicyAppendixRequest, opts ...grpc.CallOption) (*DeletePolicyAppendixResponse, error)
 }
 
 type policyAppendixServiceClient struct {
@@ -160,6 +163,16 @@ func (c *policyAppendixServiceClient) DiffPolicyAppendix(ctx context.Context, in
 	return out, nil
 }
 
+func (c *policyAppendixServiceClient) DeletePolicyAppendix(ctx context.Context, in *DeletePolicyAppendixRequest, opts ...grpc.CallOption) (*DeletePolicyAppendixResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeletePolicyAppendixResponse)
+	err := c.cc.Invoke(ctx, PolicyAppendixService_DeletePolicyAppendix_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PolicyAppendixServiceServer is the server API for PolicyAppendixService service.
 // All implementations must embed UnimplementedPolicyAppendixServiceServer
 // for forward compatibility.
@@ -176,6 +189,8 @@ type PolicyAppendixServiceServer interface {
 	ReorderPolicyAppendices(context.Context, *ReorderPolicyAppendicesRequest) (*ReorderPolicyAppendicesResponse, error)
 	CheckpointAppendixDraft(context.Context, *CheckpointAppendixDraftRequest) (*CheckpointAppendixDraftResponse, error)
 	DiffPolicyAppendix(context.Context, *DiffPolicyAppendixRequest) (*DiffPolicyAppendixResponse, error)
+	// Removes a retired appendix, its versions and its history for good.
+	DeletePolicyAppendix(context.Context, *DeletePolicyAppendixRequest) (*DeletePolicyAppendixResponse, error)
 	mustEmbedUnimplementedPolicyAppendixServiceServer()
 }
 
@@ -215,6 +230,9 @@ func (UnimplementedPolicyAppendixServiceServer) CheckpointAppendixDraft(context.
 }
 func (UnimplementedPolicyAppendixServiceServer) DiffPolicyAppendix(context.Context, *DiffPolicyAppendixRequest) (*DiffPolicyAppendixResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DiffPolicyAppendix not implemented")
+}
+func (UnimplementedPolicyAppendixServiceServer) DeletePolicyAppendix(context.Context, *DeletePolicyAppendixRequest) (*DeletePolicyAppendixResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeletePolicyAppendix not implemented")
 }
 func (UnimplementedPolicyAppendixServiceServer) mustEmbedUnimplementedPolicyAppendixServiceServer() {}
 func (UnimplementedPolicyAppendixServiceServer) testEmbeddedByValue()                               {}
@@ -417,6 +435,24 @@ func _PolicyAppendixService_DiffPolicyAppendix_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PolicyAppendixService_DeletePolicyAppendix_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletePolicyAppendixRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PolicyAppendixServiceServer).DeletePolicyAppendix(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PolicyAppendixService_DeletePolicyAppendix_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PolicyAppendixServiceServer).DeletePolicyAppendix(ctx, req.(*DeletePolicyAppendixRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PolicyAppendixService_ServiceDesc is the grpc.ServiceDesc for PolicyAppendixService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -463,6 +499,10 @@ var PolicyAppendixService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DiffPolicyAppendix",
 			Handler:    _PolicyAppendixService_DiffPolicyAppendix_Handler,
+		},
+		{
+			MethodName: "DeletePolicyAppendix",
+			Handler:    _PolicyAppendixService_DeletePolicyAppendix_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
