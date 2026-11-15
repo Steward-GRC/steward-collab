@@ -47,6 +47,10 @@ Each editor is told: a `snapshot.rejected` control frame with the reason and cor
 - `grpc_error` with `InvalidArgument` or `FailedPrecondition`: core refused the content (template
   mismatch, failed validation, an empty snapshot over a draft with text). The author fixes it; the
   refusal stands until a newer checkpoint is accepted.
+- `grpc_error` with `FailedPrecondition` and `status=rejected` in the detail: the version was
+  rejected, which is final, so core refuses a late checkpoint. A version in review still takes
+  checkpoints, because the author keeps editing while approvers review. Collab keeps no status of
+  its own; core's `UpdateDraftContent` decides, and the editor is shown core's reason.
 - `grpc_error` with `Unavailable` or `DeadlineExceeded`: core couldn't answer. The checkpoint stays
   queued and is resent on the next snapshot or flush.
 
