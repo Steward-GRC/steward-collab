@@ -74,7 +74,8 @@ func serveAuth(t *testing.T, opts Options, seen chan grpcactor.Actor) string {
 	t.Cleanup(func() {
 		cancel()
 		select {
-		case <-done:
+		case err := <-done:
+			_ = err
 		case <-time.After(15 * time.Second):
 			t.Error("Serve did not stop")
 		}

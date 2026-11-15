@@ -125,9 +125,16 @@ func Serve(ctx context.Context, lis net.Listener, lg log.Logger, opts Options, r
 		case <-time.After(gracefulStopTimeout):
 			s.Stop()
 		}
-		<-errCh
+		awaitServe(errCh)
 		return nil
 	}
+}
+
+// awaitServe waits for the serving goroutine to return after a stop. The error
+// it returns then (the listener closing) is expected, so it is dropped.
+func awaitServe(errCh <-chan error) {
+	err := <-errCh
+	_ = err
 }
 
 // actorPassing believes an end-user actor only from a caller the policy lists
