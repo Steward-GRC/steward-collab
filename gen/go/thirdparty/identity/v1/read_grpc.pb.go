@@ -36,6 +36,7 @@ const (
 	IdentityReadService_ListUsersByEmail_FullMethodName           = "/steward.identity.v1.IdentityReadService/ListUsersByEmail"
 	IdentityReadService_ListGroups_FullMethodName                 = "/steward.identity.v1.IdentityReadService/ListGroups"
 	IdentityReadService_SearchGroups_FullMethodName               = "/steward.identity.v1.IdentityReadService/SearchGroups"
+	IdentityReadService_ListIdpGroupNames_FullMethodName          = "/steward.identity.v1.IdentityReadService/ListIdpGroupNames"
 	IdentityReadService_ListUsersByIdpGroups_FullMethodName       = "/steward.identity.v1.IdentityReadService/ListUsersByIdpGroups"
 	IdentityReadService_CountUsersByIdpGroups_FullMethodName      = "/steward.identity.v1.IdentityReadService/CountUsersByIdpGroups"
 	IdentityReadService_ListAllUsers_FullMethodName               = "/steward.identity.v1.IdentityReadService/ListAllUsers"
@@ -124,6 +125,14 @@ type IdentityReadServiceClient interface {
 	// underscore in it is text, not a pattern. Groups have no description, so
 	// the name is all that is matched. Who may ask is the caller's rule.
 	SearchGroups(ctx context.Context, in *SearchGroupsRequest, opts ...grpc.CallOption) (*SearchGroupsResponse, error)
+	// ListIdpGroupNames lists the directory (identity provider) group names
+	// identity knows: the distinct union of every user's IdP groups and the
+	// claim values in the SSO group mappings, sorted by byte order. The optional
+	// prefix matches case-insensitively (percent and underscore are text);
+	// limit is 50 when unset and at most 200, and truncated says more matched.
+	// It carries names only, never who holds them. Who may ask (group managers
+	// and template admins) is the caller's rule.
+	ListIdpGroupNames(ctx context.Context, in *ListIdpGroupNamesRequest, opts ...grpc.CallOption) (*ListIdpGroupNamesResponse, error)
 	// ListUsersByIdpGroups lists the users holding any of the named identity
 	// provider groups.
 	ListUsersByIdpGroups(ctx context.Context, in *ListUsersByIdpGroupsRequest, opts ...grpc.CallOption) (*ListUsersByIdpGroupsResponse, error)
@@ -382,6 +391,16 @@ func (c *identityReadServiceClient) SearchGroups(ctx context.Context, in *Search
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SearchGroupsResponse)
 	err := c.cc.Invoke(ctx, IdentityReadService_SearchGroups_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityReadServiceClient) ListIdpGroupNames(ctx context.Context, in *ListIdpGroupNamesRequest, opts ...grpc.CallOption) (*ListIdpGroupNamesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListIdpGroupNamesResponse)
+	err := c.cc.Invoke(ctx, IdentityReadService_ListIdpGroupNames_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -789,6 +808,14 @@ type IdentityReadServiceServer interface {
 	// underscore in it is text, not a pattern. Groups have no description, so
 	// the name is all that is matched. Who may ask is the caller's rule.
 	SearchGroups(context.Context, *SearchGroupsRequest) (*SearchGroupsResponse, error)
+	// ListIdpGroupNames lists the directory (identity provider) group names
+	// identity knows: the distinct union of every user's IdP groups and the
+	// claim values in the SSO group mappings, sorted by byte order. The optional
+	// prefix matches case-insensitively (percent and underscore are text);
+	// limit is 50 when unset and at most 200, and truncated says more matched.
+	// It carries names only, never who holds them. Who may ask (group managers
+	// and template admins) is the caller's rule.
+	ListIdpGroupNames(context.Context, *ListIdpGroupNamesRequest) (*ListIdpGroupNamesResponse, error)
 	// ListUsersByIdpGroups lists the users holding any of the named identity
 	// provider groups.
 	ListUsersByIdpGroups(context.Context, *ListUsersByIdpGroupsRequest) (*ListUsersByIdpGroupsResponse, error)
@@ -954,6 +981,9 @@ func (UnimplementedIdentityReadServiceServer) ListGroups(context.Context, *ListG
 }
 func (UnimplementedIdentityReadServiceServer) SearchGroups(context.Context, *SearchGroupsRequest) (*SearchGroupsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SearchGroups not implemented")
+}
+func (UnimplementedIdentityReadServiceServer) ListIdpGroupNames(context.Context, *ListIdpGroupNamesRequest) (*ListIdpGroupNamesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListIdpGroupNames not implemented")
 }
 func (UnimplementedIdentityReadServiceServer) ListUsersByIdpGroups(context.Context, *ListUsersByIdpGroupsRequest) (*ListUsersByIdpGroupsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListUsersByIdpGroups not implemented")
@@ -1329,6 +1359,24 @@ func _IdentityReadService_SearchGroups_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IdentityReadServiceServer).SearchGroups(ctx, req.(*SearchGroupsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityReadService_ListIdpGroupNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListIdpGroupNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityReadServiceServer).ListIdpGroupNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityReadService_ListIdpGroupNames_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityReadServiceServer).ListIdpGroupNames(ctx, req.(*ListIdpGroupNamesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2025,6 +2073,10 @@ var IdentityReadService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchGroups",
 			Handler:    _IdentityReadService_SearchGroups_Handler,
+		},
+		{
+			MethodName: "ListIdpGroupNames",
+			Handler:    _IdentityReadService_ListIdpGroupNames_Handler,
 		},
 		{
 			MethodName: "ListUsersByIdpGroups",
